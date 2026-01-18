@@ -72,37 +72,45 @@ const RetirementSimulator = () => {
     return tax;
   };
   
-  const calcTotalTax = (income, location) => {
-    const federal = calcBracketTax(income, taxBrackets.federal);
+  const calcTotalTax = (taxableIncome, grossIncome, location) => {
+    // Income taxes are on taxable income (after pre-tax deductions)
+    const federal = calcBracketTax(taxableIncome, taxBrackets.federal);
     let state = 0;
     let city = 0;
-    
+
     if (location === 'nyc') {
-      state = calcBracketTax(income, taxBrackets.nyc.state);
-      city = calcBracketTax(income, taxBrackets.nyc.city);
+      state = calcBracketTax(taxableIncome, taxBrackets.nyc.state);
+      city = calcBracketTax(taxableIncome, taxBrackets.nyc.city);
     } else if (location === 'nj') {
-      state = calcBracketTax(income, taxBrackets.nj);
+      state = calcBracketTax(taxableIncome, taxBrackets.nj);
     }
-    
-    // FICA (Social Security 6.2% up to $176,100 + Medicare 1.45% + 0.9% additional over $250k)
+
+    // FICA is on GROSS wages (not reduced by 401k/HSA)
+    // Social Security 6.2% up to $176,100 + Medicare 1.45% + 0.9% additional over $250k MFJ
     const ssLimit = 176100;
-    const ss = Math.min(income, ssLimit) * 0.062;
-    const medicare = income * 0.0145 + Math.max(0, income - 250000) * 0.009;
-    
+    const ss = Math.min(grossIncome, ssLimit) * 0.062;
+    const medicare = grossIncome * 0.0145 + Math.max(0, grossIncome - 250000) * 0.009;
+
     return { federal, state, city, fica: ss + medicare, total: federal + state + city + ss + medicare };
   };
   
   const calcCapGainsTax = (gains, ordinaryIncome, location) => {
-    // Federal LTCG brackets (married filing jointly)
+    // Federal LTCG brackets (married filing jointly 2025)
+    // Rate depends on taxable income including gains
+    const totalIncome = ordinaryIncome + gains;
     let federalRate = 0.20; // default high bracket
-    if (ordinaryIncome + gains <= 96700) federalRate = 0;
-    else if (ordinaryIncome + gains <= 600050) federalRate = 0.15;
-    
+    if (totalIncome <= 96700) federalRate = 0;
+    else if (totalIncome <= 600050) federalRate = 0.15;
+
     const federal = gains * federalRate;
-    
-    // NIIT 3.8% if MAGI > $250k
-    const niit = ordinaryIncome > 250000 ? gains * 0.038 : 0;
-    
+
+    // NIIT 3.8% applies to lesser of:
+    // (a) net investment income, or
+    // (b) MAGI exceeding $250k threshold (MFJ)
+    const niitThreshold = 250000;
+    const magiExcess = Math.max(0, totalIncome - niitThreshold);
+    const niit = Math.min(gains, magiExcess) * 0.038;
+
     // State taxes cap gains as ordinary income
     let state = 0;
     if (location === 'nyc') {
@@ -111,7 +119,7 @@ const RetirementSimulator = () => {
     } else if (location === 'nj') {
       state = gains * 0.0897; // NJ high bracket
     }
-    
+
     return federal + niit + state;
   };
 
@@ -191,20 +199,25 @@ const RetirementSimulator = () => {
       taxable: inputs.initialTaxable,
     };
     
-    // Calculate taxes on gross income (after pre-tax deductions)
-    // Note: Commuter is employer-funded so doesn't come from gross
+    // Calculate taxes
+    // Pre-tax deductions reduce income tax (but not FICA)
     const preTaxDeductions = annual.pretax401k + annual.hsa + annual.dependentCareFSA;
     const taxableIncome = inputs.grossIncome - preTaxDeductions;
-    const taxes = calcTotalTax(taxableIncome, inputs.location);
-    
-    // What's left after taxes and spending
-    const afterTaxIncome = inputs.grossIncome - taxes.total;
-    const totalSavings = Math.max(0, afterTaxIncome - inputs.annualSpend);
-    
-    // Taxable is what's left after tax-advantaged
-    // Note: FSA and commuter are "spent" on childcare/transit, not invested
-    const taxAdvFromSavings = annual.pretax401k + annual.hsa + annual.backdoorRoth + annual.megaBackdoor;
-    const taxable = Math.max(0, totalSavings - taxAdvFromSavings);
+    const taxes = calcTotalTax(taxableIncome, inputs.grossIncome, inputs.location);
+
+    // Cash flow:
+    // 1. Gross income
+    // 2. Minus pre-tax contributions (401k, HSA, FSA) - these go directly to accounts
+    // 3. Minus all taxes (income tax on reduced amount, FICA on gross)
+    // 4. = Take-home cash
+    // 5. Minus spending = savings available for post-tax investments
+    const takeHomeCash = inputs.grossIncome - preTaxDeductions - taxes.total;
+    const totalSavings = Math.max(0, takeHomeCash - inputs.annualSpend);
+
+    // Post-tax contributions come from take-home savings
+    // (401k/HSA already deducted from paycheck, so only Roth accounts here)
+    const postTaxContributions = annual.backdoorRoth + annual.megaBackdoor;
+    const taxable = Math.max(0, totalSavings - postTaxContributions);
     
     // Build year-by-year data
     const years = [];
