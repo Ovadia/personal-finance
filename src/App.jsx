@@ -133,38 +133,38 @@ const RetirementSimulator = () => {
 
   // Input state
   const [inputs, setInputs] = useState({
-    currentAge: 31,
-    retirementAge: 59.5,
-    grossIncome: 750000,
-    annualSpend: 250000,
+    currentAge: 35,
+    retirementAge: 60,
+    grossIncome: 500000,
+    annualSpend: 150000,
     growthRate: 7,
     location: 'nyc', // 'nyc' or 'nj'
-    
+
     // Account toggles and amounts
     enable401k: true,
     contribution401k: 47000,
-    match401k: 15750,
-    initial401k: 500000,
-    
+    match401k: 10000,
+    initial401k: 250000,
+
     enableHSA: true,
     contributionHSA: 8550,
-    initialHSA: 25000,
-    
+    initialHSA: 15000,
+
     enableBackdoorRoth: true,
     contributionBackdoorRoth: 14000,
-    initialBackdoorRoth: 50000,
-    
+    initialBackdoorRoth: 30000,
+
     enableMegaBackdoor: true,
-    contributionMegaBackdoor: 80000,
-    initialMegaBackdoor: 200000,
-    
+    contributionMegaBackdoor: 50000,
+    initialMegaBackdoor: 100000,
+
     enableDependentCareFSA: true,
     contributionDependentCareFSA: 5000,
-    
+
     enableCommuter: true,
-    commuterEmployerContribution: 3120, // $130/mo x 2 people x 12 months
-    
-    initialTaxable: 400000,
+    commuterEmployerContribution: 1560, // $130/mo x 12 months
+
+    initialTaxable: 150000,
   });
   
   const [viewMode, setViewMode] = useState('before');
