@@ -579,23 +579,34 @@ const RetirementSimulator = () => {
                 <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(inputs.grossIncome)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#64748b' }}>− Taxes ({inputs.location.toUpperCase()})</span>
+                <span style={{ color: '#f97316' }}>− Pre-tax (401k/HSA/FSA)</span>
+                <span style={{ color: '#f97316', fontFamily: 'monospace' }}>−{fmt(annual.pretax401k + annual.hsa + annual.dependentCareFSA)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#ef4444' }}>− Taxes ({inputs.location.toUpperCase()})</span>
                 <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>−{fmt(Math.round(taxes.total))}</span>
               </div>
               <div style={{ paddingLeft: '12px', color: '#64748b', fontSize: '9px' }}>
                 Fed: {fmt(Math.round(taxes.federal))} | State/City: {fmt(Math.round(taxes.state + taxes.city))} | FICA: {fmt(Math.round(taxes.fica))}
               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '3px', marginTop: '2px' }}>
+                <span style={{ color: '#94a3b8' }}>= Take-home Cash</span>
+                <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(inputs.grossIncome - annual.pretax401k - annual.hsa - annual.dependentCareFSA - Math.round(taxes.total))}</span>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#fb923c' }}>− Annual Spend</span>
+                <span style={{ color: '#fb923c' }}>− Spending</span>
                 <span style={{ color: '#fb923c', fontFamily: 'monospace' }}>−{fmt(inputs.annualSpend)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '3px', marginTop: '2px' }}>
-                <span style={{ color: '#4ade80', fontWeight: 600 }}>= Savings</span>
+                <span style={{ color: '#4ade80', fontWeight: 600 }}>= Post-tax Savings</span>
                 <span style={{ color: '#4ade80', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(totalSavings)}</span>
               </div>
-              
+
               <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '9px', color: '#64748b' }}>
-                ALLOCATED: 401k+Match {fmt(annual.pretax401k + annual.match401k)} | HSA {fmt(annual.hsa)} | Roth {fmt(annual.backdoorRoth + annual.megaBackdoor)} | Taxable {fmt(taxable)}
+                PRE-TAX: 401k {fmt(annual.pretax401k)} + Match {fmt(annual.match401k)} | HSA {fmt(annual.hsa)}
+              </div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>
+                POST-TAX: Roth {fmt(annual.backdoorRoth + annual.megaBackdoor)} | Taxable {fmt(taxable)}
               </div>
               {taxable < 0 && (
                 <div style={{ color: '#ef4444', fontSize: '9px', marginTop: '2px' }}>⚠️ Contributions exceed savings</div>
