@@ -1,6 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 const RetirementSimulator = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   // IRS limits 2025
   const IRS_LIMITS = {
     employee401k: 23500,      // Per person
@@ -394,11 +402,13 @@ const RetirementSimulator = () => {
   };
 
   return (
-    <div style={{ 
+    <div style={{
       background: 'linear-gradient(145deg, #0c0f1a 0%, #1a1f35 100%)',
-      padding: '20px',
+      padding: isMobile ? '12px' : '20px',
       borderRadius: '16px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      minHeight: '100vh',
+      boxSizing: 'border-box',
     }}>
       <h2 style={{ color: '#f8fafc', marginBottom: '2px', fontWeight: 600, fontSize: '18px' }}>
         Tax-Advantaged Retirement Simulator
@@ -408,28 +418,30 @@ const RetirementSimulator = () => {
       </p>
       
       {/* Main view toggle */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexDirection: isMobile ? 'column' : 'row' }}>
         <button onClick={() => setMainView('projection')} style={{
-          padding: '10px 20px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+          padding: isMobile ? '12px 16px' : '10px 20px', borderRadius: '8px', fontSize: isMobile ? '14px' : '12px', fontWeight: 600, cursor: 'pointer',
           border: mainView === 'projection' ? '2px solid #4ade80' : '1px solid rgba(255,255,255,0.15)',
           background: mainView === 'projection' ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.03)',
           color: mainView === 'projection' ? '#4ade80' : '#94a3b8',
+          flex: isMobile ? 'none' : 'initial',
         }}>📈 Long-term Projection</button>
         <button onClick={() => setMainView('annual')} style={{
-          padding: '10px 20px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+          padding: isMobile ? '12px 16px' : '10px 20px', borderRadius: '8px', fontSize: isMobile ? '14px' : '12px', fontWeight: 600, cursor: 'pointer',
           border: mainView === 'annual' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.15)',
           background: mainView === 'annual' ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.03)',
           color: mainView === 'annual' ? '#38bdf8' : '#94a3b8',
+          flex: isMobile ? 'none' : 'initial',
         }}>💸 Annual Cash Flow</button>
       </div>
       
       {mainView === 'annual' ? (
-        <AnnualSankeyView inputs={inputs} taxes={taxes} annual={annual} taxable={taxable} totalSavings={totalSavings} fmt={fmt} />
+        <AnnualSankeyView inputs={inputs} taxes={taxes} annual={annual} taxable={taxable} totalSavings={totalSavings} fmt={fmt} isMobile={isMobile} />
       ) : (
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '16px' }}>
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: '16px' }}>
         {/* Left: Inputs */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '600px', overflowY: 'auto', paddingRight: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: isMobile ? 'none' : '600px', overflowY: isMobile ? 'visible' : 'auto', paddingRight: isMobile ? '0' : '8px' }}>
           {/* Basic Info */}
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', padding: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
             <h3 style={{ color: '#f8fafc', fontSize: '11px', fontWeight: 600, marginBottom: '10px' }}>BASICS</h3>
@@ -656,7 +668,7 @@ const RetirementSimulator = () => {
                 <span style={{ color: '#f8fafc', fontSize: '12px' }}>{fmt(selectedYear.grandTotal)} → <span style={{ color: '#4ade80' }}>{fmt(selectedYear.afterTax)} after tax</span></span>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'before' ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? (viewMode === 'before' ? '1fr' : 'repeat(2, 1fr)') : (viewMode === 'before' ? '1fr 1fr' : 'repeat(4, 1fr)'), gap: '8px' }}>
                 {viewMode === 'before' ? (
                   <>
                     <div style={{ background: 'rgba(74,222,128,0.1)', borderRadius: '6px', padding: '10px', border: '1px solid rgba(74,222,128,0.2)' }}>
@@ -838,7 +850,7 @@ const RetirementSimulator = () => {
 };
 
 // Annual Cash Flow Sankey Component
-const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt }) => {
+const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, isMobile }) => {
   const width = 750;
   const height = 420;
   const nodeWidth = 18;
@@ -995,7 +1007,7 @@ const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt })
       </svg>
       
       {/* Summary boxes */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginTop: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: '8px', marginTop: '16px' }}>
         <div style={{ background: 'rgba(239,68,68,0.1)', borderRadius: '8px', padding: '10px', borderLeft: '3px solid #ef4444' }}>
           <div style={{ color: '#64748b', fontSize: '9px', textTransform: 'uppercase' }}>Taxes</div>
           <div style={{ color: '#ef4444', fontSize: '16px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(totalTax)}</div>
