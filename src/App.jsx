@@ -218,9 +218,11 @@ const RetirementSimulator = () => {
     // 2. Minus pre-tax contributions (401k, HSA, FSA) - these go directly to accounts
     // 3. Minus all taxes (income tax on reduced amount, FICA on gross)
     // 4. = Take-home cash
-    // 5. Minus spending = savings available for post-tax investments
+    // 5. Minus spending (reduced by FSA which covers childcare) = post-tax savings
     const takeHomeCash = inputs.grossIncome - preTaxDeductions - taxes.total;
-    const totalSavings = Math.max(0, takeHomeCash - inputs.annualSpend);
+    // FSA covers part of spending (childcare), so only remaining spending comes from take-home
+    const spendFromTakeHome = inputs.annualSpend - annual.dependentCareFSA;
+    const totalSavings = Math.max(0, takeHomeCash - spendFromTakeHome);
 
     // Post-tax contributions come from take-home savings
     // (401k/HSA already deducted from paycheck, so only Roth accounts here)
@@ -594,8 +596,8 @@ const RetirementSimulator = () => {
                 <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(inputs.grossIncome - annual.pretax401k - annual.hsa - annual.dependentCareFSA - Math.round(taxes.total))}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#fb923c' }}>− Spending</span>
-                <span style={{ color: '#fb923c', fontFamily: 'monospace' }}>−{fmt(inputs.annualSpend)}</span>
+                <span style={{ color: '#fb923c' }}>− Spending (excl FSA)</span>
+                <span style={{ color: '#fb923c', fontFamily: 'monospace' }}>−{fmt(inputs.annualSpend - annual.dependentCareFSA)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '3px', marginTop: '2px' }}>
                 <span style={{ color: '#4ade80', fontWeight: 600 }}>= Post-tax Savings</span>
@@ -1057,12 +1059,6 @@ const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, i
       value: link.value,
     };
   }).filter(Boolean);
-  
-  const taxBreakdown = [
-    { label: 'Federal', value: Math.round(taxes.federal) },
-    { label: inputs.location === 'nyc' ? 'NY+NYC' : 'NJ', value: Math.round(taxes.state + taxes.city) },
-    { label: 'FICA', value: Math.round(taxes.fica) },
-  ];
 
   return (
     <div>
