@@ -926,64 +926,72 @@ const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, i
   const width = 750;
   const height = 420;
   const nodeWidth = 18;
-  
+
   const grossIncome = inputs.grossIncome;
   const totalTax = Math.round(taxes.total);
-  const afterTaxIncome = grossIncome - totalTax;
   const match = annual.match401k;
   const fsa = annual.dependentCareFSA;
   const commuterEmployer = annual.commuterEmployer;
-  
-  // Node data
+
+  // Pre-tax deductions come out of gross BEFORE taxes
+  const pretaxDeductions = annual.pretax401k + annual.hsa + fsa;
+  // Take-home = gross - pretax deductions - taxes
+  const takeHome = grossIncome - pretaxDeductions - totalTax;
+  // Post-tax savings (for Roth and taxable)
+  const postTaxSavings = annual.backdoorRoth + annual.megaBackdoor + Math.max(0, taxable);
+
+  // Node data - corrected flow
   const nodes = {
     gross: { label: 'Gross Income', value: grossIncome, col: 0, color: '#f8fafc' },
+    // Column 1: Where gross income goes
+    pretax401k: { label: '401k (pre-tax)', value: annual.pretax401k, col: 1, color: '#f97316' },
+    hsaPretax: { label: 'HSA (pre-tax)', value: annual.hsa, col: 1, color: '#a855f7' },
+    fsaPretax: { label: 'FSA (pre-tax)', value: fsa, col: 1, color: '#f472b6' },
     taxes: { label: 'Taxes', value: totalTax, col: 1, color: '#ef4444' },
-    takehome: { label: 'Take Home', value: afterTaxIncome, col: 1, color: '#4ade80' },
+    takehome: { label: 'Take Home', value: takeHome, col: 1, color: '#4ade80' },
+    // Employer contributions (free money)
     match: { label: '401k Match', value: match, col: 1, color: '#fbbf24' },
-    commuterBenefit: { label: 'Commuter Benefit', value: commuterEmployer, col: 1, color: '#06b6d4' },
-    spend: { label: 'Spending', value: inputs.annualSpend - fsa, col: 2, color: '#fb923c' },
-    savings: { label: 'Savings', value: totalSavings, col: 2, color: '#4ade80' },
-    fsaSpend: { label: 'Childcare (FSA)', value: fsa, col: 2, color: '#f472b6' },
-    commuterSpend: { label: 'Transit', value: commuterEmployer, col: 2, color: '#06b6d4' },
-    k401: { label: '401k', value: annual.pretax401k + match, col: 3, color: '#f97316' },
-    hsa: { label: 'HSA', value: annual.hsa, col: 3, color: '#a855f7' },
-    roth: { label: 'Roth', value: annual.backdoorRoth + annual.megaBackdoor, col: 3, color: '#4ade80' },
+    commuterBenefit: { label: 'Commuter', value: commuterEmployer, col: 1, color: '#06b6d4' },
+    // Column 2: Where take-home goes
+    spend: { label: 'Spending', value: Math.max(0, takeHome - postTaxSavings), col: 2, color: '#fb923c' },
+    postTaxSave: { label: 'Post-tax Savings', value: postTaxSavings, col: 2, color: '#4ade80' },
+    // Column 3: Account destinations
+    k401Total: { label: '401k Total', value: annual.pretax401k + match, col: 3, color: '#f97316' },
+    hsaTotal: { label: 'HSA', value: annual.hsa, col: 3, color: '#a855f7' },
+    roth: { label: 'Roth IRAs', value: annual.backdoorRoth + annual.megaBackdoor, col: 3, color: '#4ade80' },
     taxableAcct: { label: 'Taxable', value: Math.max(0, taxable), col: 3, color: '#38bdf8' },
-    fsaAcct: { label: 'Dep Care FSA', value: fsa, col: 3, color: '#f472b6' },
-    pretax: { label: 'Pre-tax Growth', value: annual.pretax401k + match, col: 4, color: '#f97316' },
-    taxfree: { label: 'Tax-free Growth', value: annual.hsa + annual.backdoorRoth + annual.megaBackdoor, col: 4, color: '#4ade80' },
-    taxlater: { label: 'Taxed on Gains', value: Math.max(0, taxable), col: 4, color: '#38bdf8' },
-    spentPretax: { label: 'Spent (Tax-free)', value: fsa + commuterEmployer, col: 4, color: '#f472b6' },
+    fsaSpent: { label: 'Childcare', value: fsa, col: 3, color: '#f472b6' },
+    transitSpent: { label: 'Transit', value: commuterEmployer, col: 3, color: '#06b6d4' },
   };
-  
-  // Links
+
+  // Links - corrected flow
   const links = [
+    // From gross income
+    { source: 'gross', target: 'pretax401k', value: annual.pretax401k },
+    { source: 'gross', target: 'hsaPretax', value: annual.hsa },
+    { source: 'gross', target: 'fsaPretax', value: fsa },
     { source: 'gross', target: 'taxes', value: totalTax },
-    { source: 'gross', target: 'takehome', value: afterTaxIncome },
-    { source: 'takehome', target: 'spend', value: inputs.annualSpend - fsa },
-    { source: 'takehome', target: 'savings', value: totalSavings },
-    { source: 'takehome', target: 'fsaSpend', value: fsa },
-    { source: 'match', target: 'k401', value: match },
-    { source: 'commuterBenefit', target: 'commuterSpend', value: commuterEmployer },
-    { source: 'savings', target: 'k401', value: annual.pretax401k },
-    { source: 'savings', target: 'hsa', value: annual.hsa },
-    { source: 'savings', target: 'roth', value: annual.backdoorRoth + annual.megaBackdoor },
-    { source: 'savings', target: 'taxableAcct', value: Math.max(0, taxable) },
-    { source: 'fsaSpend', target: 'fsaAcct', value: fsa },
-    { source: 'k401', target: 'pretax', value: annual.pretax401k + match },
-    { source: 'hsa', target: 'taxfree', value: annual.hsa },
-    { source: 'roth', target: 'taxfree', value: annual.backdoorRoth + annual.megaBackdoor },
-    { source: 'taxableAcct', target: 'taxlater', value: Math.max(0, taxable) },
-    { source: 'fsaAcct', target: 'spentPretax', value: fsa },
-    { source: 'commuterSpend', target: 'spentPretax', value: commuterEmployer },
+    { source: 'gross', target: 'takehome', value: takeHome },
+    // From take-home
+    { source: 'takehome', target: 'spend', value: Math.max(0, takeHome - postTaxSavings) },
+    { source: 'takehome', target: 'postTaxSave', value: postTaxSavings },
+    // Pre-tax to accounts
+    { source: 'pretax401k', target: 'k401Total', value: annual.pretax401k },
+    { source: 'match', target: 'k401Total', value: match },
+    { source: 'hsaPretax', target: 'hsaTotal', value: annual.hsa },
+    { source: 'fsaPretax', target: 'fsaSpent', value: fsa },
+    { source: 'commuterBenefit', target: 'transitSpent', value: commuterEmployer },
+    // Post-tax savings to accounts
+    { source: 'postTaxSave', target: 'roth', value: annual.backdoorRoth + annual.megaBackdoor },
+    { source: 'postTaxSave', target: 'taxableAcct', value: Math.max(0, taxable) },
   ].filter(l => l.value > 0);
   
-  // Calculate positions
-  const colX = [40, 160, 300, 440, 600];
-  const colHeaders = ['INCOME', 'AFTER TAX', 'ALLOCATION', 'ACCOUNT', 'TAX TREATMENT'];
+  // Calculate positions (4 columns now)
+  const colX = [40, 200, 400, 580];
+  const colHeaders = ['INCOME', 'DEDUCTIONS & TAXES', 'USE OF FUNDS', 'ACCOUNTS'];
   
   // Group nodes by column
-  const cols = [[], [], [], [], []];
+  const cols = [[], [], [], []];
   Object.entries(nodes).forEach(([id, node]) => {
     cols[node.col].push({ id, ...node });
   });
