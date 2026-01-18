@@ -73,16 +73,24 @@ const RetirementSimulator = () => {
   };
   
   const calcTotalTax = (taxableIncome, grossIncome, location) => {
-    // Income taxes are on taxable income (after pre-tax deductions)
-    const federal = calcBracketTax(taxableIncome, taxBrackets.federal);
+    // Apply standard deduction (MFJ 2025: ~$30,000)
+    const standardDeduction = 30000;
+    const federalTaxableIncome = Math.max(0, taxableIncome - standardDeduction);
+
+    // Federal income tax is on income after standard deduction
+    const federal = calcBracketTax(federalTaxableIncome, taxBrackets.federal);
     let state = 0;
     let city = 0;
 
     if (location === 'nyc') {
-      state = calcBracketTax(taxableIncome, taxBrackets.nyc.state);
-      city = calcBracketTax(taxableIncome, taxBrackets.nyc.city);
+      // NY standard deduction MFJ ~$16,050
+      const nyTaxableIncome = Math.max(0, taxableIncome - 16050);
+      state = calcBracketTax(nyTaxableIncome, taxBrackets.nyc.state);
+      city = calcBracketTax(nyTaxableIncome, taxBrackets.nyc.city);
     } else if (location === 'nj') {
-      state = calcBracketTax(taxableIncome, taxBrackets.nj);
+      // NJ has no standard deduction, but has personal exemptions (~$3,000 MFJ)
+      const njTaxableIncome = Math.max(0, taxableIncome - 3000);
+      state = calcBracketTax(njTaxableIncome, taxBrackets.nj);
     }
 
     // FICA is on GROSS wages (not reduced by 401k/HSA)
