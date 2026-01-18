@@ -153,6 +153,7 @@ const RetirementSimulator = () => {
   
   const [viewMode, setViewMode] = useState('before');
   const [hoveredYear, setHoveredYear] = useState(null);
+  const [selectedYearIndex, setSelectedYearIndex] = useState(null);
   const [mainView, setMainView] = useState('projection'); // 'projection' or 'annual'
   
   const updateInput = (key, value) => {
@@ -356,7 +357,11 @@ const RetirementSimulator = () => {
     return `${top} ${bottom} Z`;
   };
   
-  const selectedYear = hoveredYear !== null ? years[hoveredYear] : years[years.length - 1];
+  // On mobile: use tapped selection; on desktop: hover takes priority, fall back to tapped
+  const effectiveYearIndex = hoveredYear !== null
+    ? hoveredYear
+    : (selectedYearIndex !== null ? selectedYearIndex : years.length - 1);
+  const selectedYear = years[effectiveYearIndex];
   const colors = {
     pretax: '#f97316',
     roth: '#4ade80',
@@ -638,14 +643,55 @@ const RetirementSimulator = () => {
               
               {years.map((y, i) => (
                 <rect key={i} x={xScale(i) - chartWidth / (years.length * 2)} y={0} width={chartWidth / Math.max(years.length, 1)} height={chartHeight}
-                  fill="transparent" onMouseEnter={() => setHoveredYear(i)} onMouseLeave={() => setHoveredYear(null)} style={{ cursor: 'pointer' }} />
+                  fill="transparent"
+                  onClick={() => setSelectedYearIndex(i)}
+                  onMouseEnter={() => !isMobile && setHoveredYear(i)}
+                  onMouseLeave={() => !isMobile && setHoveredYear(null)}
+                  style={{ cursor: 'pointer' }} />
               ))}
-              {hoveredYear !== null && (
-                <line x1={xScale(hoveredYear)} y1={0} x2={xScale(hoveredYear)} y2={chartHeight} stroke="rgba(255,255,255,0.6)" strokeWidth="1" />
+              {(hoveredYear !== null || selectedYearIndex !== null) && (
+                <line x1={xScale(effectiveYearIndex)} y1={0} x2={xScale(effectiveYearIndex)} y2={chartHeight} stroke="rgba(255,255,255,0.6)" strokeWidth="1" />
+              )}
+              {/* Selected year dot marker */}
+              {(hoveredYear !== null || selectedYearIndex !== null) && (
+                <circle cx={xScale(effectiveYearIndex)} cy={yScale(years[effectiveYearIndex]?.grandTotal || 0)} r="5" fill="#4ade80" stroke="#0c0f1a" strokeWidth="2" />
               )}
             </g>
           </svg>
-          
+
+          {/* Mobile year navigation */}
+          {isMobile && (
+            <div style={{ padding: '12px 0' }}>
+              <input
+                type="range"
+                min={0}
+                max={totalYears}
+                value={effectiveYearIndex}
+                onChange={(e) => setSelectedYearIndex(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#4ade80' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <button
+                  onClick={() => setSelectedYearIndex(Math.max(0, effectiveYearIndex - 1))}
+                  style={{
+                    padding: '8px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                    color: '#f8fafc', cursor: 'pointer',
+                  }}
+                >← Younger</button>
+                <span style={{ color: '#4ade80', fontSize: '14px', fontWeight: 600 }}>Age {selectedYear.age}</span>
+                <button
+                  onClick={() => setSelectedYearIndex(Math.min(totalYears, effectiveYearIndex + 1))}
+                  style={{
+                    padding: '8px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                    color: '#f8fafc', cursor: 'pointer',
+                  }}
+                >Older →</button>
+              </div>
+            </div>
+          )}
+
           {/* Legend */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
             {viewMode === 'before' && (
