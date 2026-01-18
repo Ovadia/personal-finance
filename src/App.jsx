@@ -266,9 +266,9 @@ const RetirementSimulator = () => {
         taxablePrincipal = initial.taxable;
       }
       
-      // Add contributions for each year
+      // Add contributions for each year (assume contributions at start of year)
       for (let cy = 1; cy <= year; cy++) {
-        const yg = year - cy;
+        const yg = year - cy + 1; // +1 because contribution at START of year grows for full year
         const gm = Math.pow(1 + growthRate, yg);
         const gainsM = gm - 1;
         
@@ -313,10 +313,15 @@ const RetirementSimulator = () => {
       y.lockedBefore = y.pretax401k + y.mbdGains + y.backdoorLocked + y.backdoorGains + y.hsaGains;
       
       // Tax calculations using proper brackets
-      // 401k withdrawal taxed as ordinary income
-      y.tax401k = Math.round(calcBracketTax(y.pretax401k, taxBrackets.federal) + 
-        (inputs.location === 'nyc' ? calcBracketTax(y.pretax401k, taxBrackets.nyc.state) + calcBracketTax(y.pretax401k, taxBrackets.nyc.city) : 
-         calcBracketTax(y.pretax401k, taxBrackets.nj)));
+      // 401k withdrawal taxed as ordinary income (apply standard deductions)
+      const fedStdDed = 30000;
+      const nyStdDed = 16050;
+      const njExemption = 3000;
+      const fed401kTaxable = Math.max(0, y.pretax401k - fedStdDed);
+      y.tax401k = Math.round(calcBracketTax(fed401kTaxable, taxBrackets.federal) +
+        (inputs.location === 'nyc'
+          ? calcBracketTax(Math.max(0, y.pretax401k - nyStdDed), taxBrackets.nyc.state) + calcBracketTax(Math.max(0, y.pretax401k - nyStdDed), taxBrackets.nyc.city)
+          : calcBracketTax(Math.max(0, y.pretax401k - njExemption), taxBrackets.nj)));
       
       // Cap gains on taxable
       y.taxCapGains = Math.round(calcCapGainsTax(y.taxableGains, 100000, inputs.location)); // assume $100k other income in retirement
