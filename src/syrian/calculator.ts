@@ -36,8 +36,8 @@ function calculateEducation(inputs: LifestyleInputs): number {
   let total = 0;
 
   for (const child of inputs.children) {
-    // Skip children not in school age (3-17)
-    if (child.age < 3 || child.age > 17) continue;
+    // Skip children not in school age (2-17)
+    if (child.age < 2 || child.age > 17) continue;
 
     // Base tuition
     total += getTuitionForChild(child.age, child.school);

@@ -21,8 +21,10 @@ export const COSTS = {
 
   // Tuition multipliers by grade level
   tuitionByAge: {
-    // Pre-K (age 3-4): ~40% of elementary
-    3: 0.42,
+    // Atideinu 2 (age 2): ~42% of elementary
+    2: 0.42,
+    // Atideinu 3 / Nursery (age 3-4): ~34% of elementary
+    3: 0.34,
     4: 0.42,
     // Kindergarten (age 5): ~80% of elementary
     5: 0.81,
@@ -124,7 +126,7 @@ export const COSTS = {
 
 // Helper to get tuition for a specific age and school
 export function getTuitionForChild(age: number, school: keyof typeof COSTS.tuition): number {
-  if (age < 3 || age > 17) return 0;
+  if (age < 2 || age > 17) return 0;
   const baseTuition = COSTS.tuition[school];
   const multiplier = COSTS.tuitionByAge[age] || 1.0;
   return Math.round(baseTuition * multiplier);

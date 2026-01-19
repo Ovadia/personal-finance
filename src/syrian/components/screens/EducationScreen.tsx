@@ -17,7 +17,7 @@ const schoolOptions: { value: SchoolChoice; icon: string }[] = [
 ];
 
 export function EducationScreen({ inputs, updateChild }: Props) {
-  const schoolAgeChildren = inputs.children.filter((c) => c.age >= 3 && c.age <= 17);
+  const schoolAgeChildren = inputs.children.filter((c) => c.age >= 2 && c.age <= 17);
 
   if (schoolAgeChildren.length === 0) {
     return (

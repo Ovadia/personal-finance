@@ -133,8 +133,8 @@ export default function SyrianCalculator() {
     }
   };
 
-  // Skip education screen if no school-age children
-  const shouldSkipEducation = inputs.children.filter((c) => c.age >= 3 && c.age <= 17).length === 0;
+  // Skip education screen if no school-age children (school starts at 2)
+  const shouldSkipEducation = inputs.children.filter((c) => c.age >= 2 && c.age <= 17).length === 0;
 
   const handleNext = () => {
     if (currentScreen === 1 && shouldSkipEducation) {
