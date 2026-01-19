@@ -51,13 +51,13 @@ export const COSTS = {
     suppliesUniforms: 750,
   },
 
-  // Household help annual costs
+  // Household help annual costs ($125/day base rate)
   help: {
     none: 0,
-    cleaning: 7200, // Weekly cleaner (~$150/week)
-    'day-worker': 31200, // 3 days/week (~$120/day × 260 days ÷ 5 × 3)
-    'full-time': 62400, // 5 days/week
-    'live-in': 40000, // Including room/board value
+    cleaning: 6500, // Weekly cleaner ($125 × 52)
+    'day-worker': 19500, // 3 days/week ($125 × 3 × 52)
+    'full-time': 32500, // 5 days/week ($125 × 5 × 52)
+    'live-in': 40000, // Live-in help
   },
 
   // Food costs (annual, family of 4 baseline)

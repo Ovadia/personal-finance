@@ -9,8 +9,8 @@ interface Props {
 
 const groceryOptions: { value: GroceryStyle; icon: string; title: string; subtitle: string }[] = [
   { value: 'budget', icon: '🛒', title: 'Budget-conscious', subtitle: 'Moishes, sales, bulk buying' },
-  { value: 'moderate', icon: '🛍️', title: 'Moderate', subtitle: 'Pomegranate, Ouris, mix of stores' },
-  { value: 'premium', icon: '✨', title: 'Premium', subtitle: 'Prime Cut, top of the line' },
+  { value: 'moderate', icon: '🛍️', title: 'Moderate', subtitle: 'Mix of budget and high-end' },
+  { value: 'premium', icon: '✨', title: 'Premium', subtitle: 'Prime Cut, Ouris, top of the line' },
 ];
 
 const hostingLabels = ['Never', 'Monthly', 'Bi-weekly', 'Weekly', 'Multiple/week'];

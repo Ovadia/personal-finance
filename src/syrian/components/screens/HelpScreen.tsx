@@ -9,10 +9,10 @@ interface Props {
 
 const helpLevels: { value: HelpLevel; label: string; description: string }[] = [
   { value: 'none', label: 'Just us', description: 'We handle it ourselves' },
-  { value: 'cleaning', label: 'Weekly cleaner', description: 'Someone comes once a week' },
-  { value: 'day-worker', label: 'Part-time help', description: '2-3 days a week' },
-  { value: 'full-time', label: 'Full-time help', description: '5 days a week' },
-  { value: 'live-in', label: 'Live-in', description: 'Around when needed' },
+  { value: 'cleaning', label: '1 day/week', description: '$125/day × 52 weeks' },
+  { value: 'day-worker', label: '3 days/week', description: '$125/day × 3 × 52 weeks' },
+  { value: 'full-time', label: '5 days/week', description: '$125/day × 5 × 52 weeks' },
+  { value: 'live-in', label: 'Live-in', description: 'Full-time live-in help' },
 ];
 
 export function HelpScreen({ inputs, updateInput }: Props) {
