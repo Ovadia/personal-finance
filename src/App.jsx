@@ -852,6 +852,29 @@ const RetirementSimulator = () => {
                 </>
               )}
               
+              {/* Net worth milestones */}
+              {(() => {
+                const milestones = [500000, 1000000, 2000000, 5000000, 10000000, 20000000];
+                return milestones.map(m => {
+                  if (m > maxValue * 0.95) return null; // Don't show if above chart
+                  const hitIndex = adjustedYears.findIndex(y => y.adj_grandTotal >= m);
+                  if (hitIndex === -1) return null;
+                  const hitYear = adjustedYears[hitIndex];
+                  return (
+                    <g key={m}>
+                      <line
+                        x1={0} y1={yScale(m)} x2={chartWidth} y2={yScale(m)}
+                        stroke="#fbbf24" strokeWidth="1" strokeDasharray="4,4" opacity="0.4"
+                      />
+                      <circle cx={xScale(hitIndex)} cy={yScale(m)} r="4" fill="#fbbf24" stroke="#0c0f1a" strokeWidth="1.5" />
+                      <text x={chartWidth - 4} y={yScale(m) - 4} textAnchor="end" fill="#fbbf24" fontSize="8" opacity="0.8">
+                        {fmt(m)} @ {hitYear.age}
+                      </text>
+                    </g>
+                  );
+                });
+              })()}
+
               {adjustedYears.filter((_, i) => i % Math.ceil(totalYears / 6) === 0 || i === totalYears).map((y) => (
                 <text key={y.year} x={xScale(y.year)} y={chartHeight + 15} textAnchor="middle" fill="#94a3b8" fontSize="9">{y.age}</text>
               ))}
@@ -922,6 +945,32 @@ const RetirementSimulator = () => {
             {inputs.enableHSA && <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '10px', height: '10px', background: colors.hsa, borderRadius: '2px' }} /><span style={{ color: '#94a3b8', fontSize: '9px' }}>HSA</span></div>}
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><div style={{ width: '10px', height: '10px', background: colors.taxable, borderRadius: '2px' }} /><span style={{ color: '#94a3b8', fontSize: '9px' }}>Taxable</span></div>
           </div>
+
+          {/* Milestones summary */}
+          {(() => {
+            const milestones = [500000, 1000000, 2000000, 5000000, 10000000, 20000000];
+            const hit = milestones
+              .map(m => {
+                const idx = adjustedYears.findIndex(y => y.adj_grandTotal >= m);
+                return idx >= 0 ? { amount: m, age: adjustedYears[idx].age } : null;
+              })
+              .filter(Boolean);
+            if (hit.length === 0) return null;
+            return (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                {hit.map(({ amount, age }) => (
+                  <div key={amount} style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    padding: '3px 8px', background: 'rgba(251,191,36,0.1)',
+                    borderRadius: '4px', border: '1px solid rgba(251,191,36,0.2)'
+                  }}>
+                    <span style={{ color: '#fbbf24', fontSize: '10px', fontWeight: 600 }}>{fmt(amount)}</span>
+                    <span style={{ color: '#64748b', fontSize: '9px' }}>@ {age}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
           
           {/* Selected year detail */}
           {selectedYear && (
