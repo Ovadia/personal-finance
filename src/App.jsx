@@ -795,38 +795,39 @@ const RetirementSimulator = () => {
             </g>
           </svg>
 
-          {/* Mobile year navigation */}
-          {isMobile && (
-            <div style={{ padding: '12px 0' }}>
+          {/* Age navigation slider */}
+          <div style={{ padding: '12px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                onClick={() => setSelectedYearIndex(Math.max(0, effectiveYearIndex - 1))}
+                style={{
+                  padding: isMobile ? '8px 12px' : '6px 10px', borderRadius: '6px', fontSize: isMobile ? '12px' : '11px', fontWeight: 600,
+                  background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#f8fafc', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >←</button>
               <input
                 type="range"
                 min={0}
                 max={totalYears}
                 value={effectiveYearIndex}
                 onChange={(e) => setSelectedYearIndex(Number(e.target.value))}
-                style={{ width: '100%', accentColor: '#4ade80' }}
+                style={{ flex: 1, accentColor: '#4ade80' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                <button
-                  onClick={() => setSelectedYearIndex(Math.max(0, effectiveYearIndex - 1))}
-                  style={{
-                    padding: '8px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
-                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                    color: '#f8fafc', cursor: 'pointer',
-                  }}
-                >← Younger</button>
-                <span style={{ color: '#4ade80', fontSize: '14px', fontWeight: 600 }}>Age {selectedYear.age}</span>
-                <button
-                  onClick={() => setSelectedYearIndex(Math.min(totalYears, effectiveYearIndex + 1))}
-                  style={{
-                    padding: '8px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
-                    background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-                    color: '#f8fafc', cursor: 'pointer',
-                  }}
-                >Older →</button>
-              </div>
+              <button
+                onClick={() => setSelectedYearIndex(Math.min(totalYears, effectiveYearIndex + 1))}
+                style={{
+                  padding: isMobile ? '8px 12px' : '6px 10px', borderRadius: '6px', fontSize: isMobile ? '12px' : '11px', fontWeight: 600,
+                  background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#f8fafc', cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >→</button>
             </div>
-          )}
+            <div style={{ textAlign: 'center', marginTop: '6px' }}>
+              <span style={{ color: '#4ade80', fontSize: '13px', fontWeight: 600 }}>Age {selectedYear.age}</span>
+              <span style={{ color: '#64748b', fontSize: '11px', marginLeft: '8px' }}>({effectiveYearIndex} of {totalYears} years)</span>
+            </div>
+          </div>
 
           {/* Legend */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
