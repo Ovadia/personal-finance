@@ -1132,6 +1132,7 @@ const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, i
   const totalTax = Math.round(taxes.total);
   const match = annual.match401k;
   const fsa = annual.dependentCareFSA;
+  const commuterEmployer = annual.commuterEmployer;
 
   // Total savings = all contributions (pre-tax come from gross, post-tax from take-home, but conceptually it's all "savings")
   const totalInvested = annual.pretax401k + match + annual.hsa + annual.backdoorRoth + annual.megaBackdoor + Math.max(0, taxable);
