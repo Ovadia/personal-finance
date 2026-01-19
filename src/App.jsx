@@ -401,27 +401,47 @@ const RetirementSimulator = () => {
     const [editing, setEditing] = useState(false);
     const [editValue, setEditValue] = useState('');
 
+    const parseInput = (str) => {
+      // Remove $, commas, spaces
+      let clean = str.replace(/[$,\s]/g, '');
+      // Handle k/K (thousands) and m/M (millions)
+      if (/k$/i.test(clean)) {
+        return parseFloat(clean) * 1000;
+      }
+      if (/m$/i.test(clean)) {
+        return parseFloat(clean) * 1000000;
+      }
+      return parseFloat(clean);
+    };
+
     const handleClick = () => {
-      setEditValue(String(value));
+      // Show raw number for editing
+      setEditValue(value.toLocaleString());
       setEditing(true);
     };
 
     const handleBlur = () => {
-      const num = Number(editValue.replace(/[^0-9.-]/g, ''));
+      const num = parseInput(editValue);
       if (!isNaN(num)) {
-        onChange(Math.min(max, Math.max(min, num)));
+        // Round to step
+        const rounded = Math.round(num / step) * step;
+        onChange(Math.min(max, Math.max(min, rounded)));
       }
       setEditing(false);
     };
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Enter') handleBlur();
-      if (e.key === 'Escape') setEditing(false);
+      if (e.key === 'Enter') {
+        e.target.blur();
+      }
+      if (e.key === 'Escape') {
+        setEditing(false);
+      }
     };
 
     return (
       <div style={{ marginBottom: '10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
           <label style={{ color: '#94a3b8', fontSize: '10px' }}>{label}</label>
           {editing ? (
             <input
@@ -431,16 +451,19 @@ const RetirementSimulator = () => {
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               autoFocus
+              onFocus={(e) => e.target.select()}
+              placeholder="e.g. 500k"
               style={{
-                width: '80px',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid #4ade80',
-                borderRadius: '3px',
+                width: '100px',
+                background: '#1e293b',
+                border: '2px solid #4ade80',
+                borderRadius: '4px',
                 color: '#f8fafc',
-                fontSize: '10px',
+                fontSize: '12px',
                 fontFamily: 'monospace',
-                padding: '2px 4px',
+                padding: '4px 8px',
                 textAlign: 'right',
+                outline: 'none',
               }}
             />
           ) : (
@@ -448,12 +471,13 @@ const RetirementSimulator = () => {
               onClick={handleClick}
               style={{
                 color: '#f8fafc',
-                fontSize: '10px',
+                fontSize: '11px',
                 fontFamily: 'monospace',
                 cursor: 'pointer',
-                padding: '2px 4px',
-                borderRadius: '3px',
-                background: 'rgba(255,255,255,0.05)',
+                padding: '3px 6px',
+                borderRadius: '4px',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.1)',
               }}
               title="Click to edit"
             >
