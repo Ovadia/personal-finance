@@ -159,14 +159,17 @@ export function ResultsScreen({ breakdown, inputs, onRestart }: Props) {
       <div className="breakdown-list">
         {categoryConfig.map((cat) => {
           const value = breakdown.categories[cat.key];
-          if (value === 0) return null;
+          // Always show education, hide others if $0
+          if (value === 0 && cat.key !== 'education') return null;
           return (
             <div key={cat.key} className="breakdown-item">
               <div className="breakdown-category">
                 <span className="breakdown-icon">{cat.icon}</span>
                 <span className="breakdown-name">{cat.label}</span>
               </div>
-              <span className="breakdown-amount">{formatCurrencyFull(value)}</span>
+              <span className="breakdown-amount">
+                {value === 0 ? 'No kids added' : formatCurrencyFull(value)}
+              </span>
             </div>
           );
         })}
