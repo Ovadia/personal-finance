@@ -15,7 +15,6 @@ export interface Child {
 export interface LifestyleInputs {
   // Screen 1: Housing
   housing: HousingChoice;
-  dealMonths: number;
 
   // Screen 2: Family
   children: Child[];
@@ -61,7 +60,6 @@ export interface CostBreakdown {
 
 export const defaultInputs: LifestyleInputs = {
   housing: 'brooklyn',
-  dealMonths: 3,
   children: [],
   planningMore: false,
   helpLevel: 'none',

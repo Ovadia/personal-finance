@@ -8,7 +8,7 @@ interface Props {
 const housingOptions: { value: HousingChoice; icon: string; title: string; subtitle: string }[] = [
   { value: 'brooklyn', icon: '🏘️', title: 'Brooklyn', subtitle: 'Year-round in the city' },
   { value: 'deal', icon: '🏖️', title: 'Deal', subtitle: 'Beach life all summer' },
-  { value: 'both', icon: '🏠', title: 'Both', subtitle: 'Best of both worlds' },
+  { value: 'both', icon: '🏠', title: 'Both', subtitle: 'Brooklyn + Deal for the summer' },
 ];
 
 export function HousingScreen({ inputs, updateInput }: Props) {
@@ -30,27 +30,6 @@ export function HousingScreen({ inputs, updateInput }: Props) {
           </div>
         ))}
       </div>
-
-      {inputs.housing === 'both' && (
-        <div className="slider-container" style={{ marginTop: '1.5rem' }}>
-          <div className="slider-label">
-            <span>Months in Deal</span>
-            <span className="slider-value">{inputs.dealMonths} months</span>
-          </div>
-          <input
-            type="range"
-            className="slider"
-            min={1}
-            max={6}
-            value={inputs.dealMonths}
-            onChange={(e) => updateInput('dealMonths', parseInt(e.target.value))}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#8a8a8a' }}>
-            <span>June only</span>
-            <span>Memorial Day - Labor Day</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -28,7 +28,7 @@ function calculateHousing(inputs: LifestyleInputs): number {
     case 'deal':
       return COSTS.housing.deal;
     case 'both':
-      return COSTS.housing.brooklyn + inputs.dealMonths * COSTS.housing.dealPerMonth;
+      return COSTS.housing.brooklyn + COSTS.housing.deal;
   }
 }
 

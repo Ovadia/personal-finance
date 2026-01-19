@@ -5,9 +5,8 @@ export const COSTS = {
   housing: {
     // Brooklyn annual costs
     brooklyn: 90000, // Typical community rent
-    // Deal costs
-    deal: 36000, // Seasonal rental (June-Aug)
-    dealPerMonth: 9000, // Per month for "both" scenario
+    // Deal costs (3 months: June-Aug)
+    deal: 36000, // Seasonal rental
   },
 
   // Tuition by school (using grade 1-5 as baseline, will scale by age)
@@ -58,7 +57,7 @@ export const COSTS = {
     cleaning: 7200, // Weekly cleaner (~$150/week)
     'day-worker': 31200, // 3 days/week (~$120/day × 260 days ÷ 5 × 3)
     'full-time': 62400, // 5 days/week
-    'live-in': 85000, // Including room/board value
+    'live-in': 40000, // Including room/board value
   },
 
   // Food costs (annual, family of 4 baseline)
@@ -66,8 +65,8 @@ export const COSTS = {
     // Grocery tiers
     grocery: {
       budget: 18000, // Moishes-level
-      moderate: 30000, // Prime Cut/Ouris-level
-      premium: 48000, // Pomegranate-level
+      moderate: 30000, // Pomegranate/Ouris-level
+      premium: 48000, // Prime Cut-level
     },
     // Per additional child
     groceryPerChild: 4800,
