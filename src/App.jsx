@@ -131,8 +131,8 @@ const RetirementSimulator = () => {
     return federal + niit + state;
   };
 
-  // Input state
-  const [inputs, setInputs] = useState({
+  // Default inputs
+  const defaultInputs = {
     currentAge: 35,
     retirementAge: 60,
     grossIncome: 500000,
@@ -165,7 +165,25 @@ const RetirementSimulator = () => {
     commuterEmployerContribution: 1560, // $130/mo x 12 months
 
     initialTaxable: 150000,
+  };
+
+  // Load from localStorage or use defaults
+  const [inputs, setInputs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('retirement-sim-inputs');
+      if (saved) {
+        return { ...defaultInputs, ...JSON.parse(saved) };
+      }
+    } catch (e) {}
+    return defaultInputs;
   });
+
+  // Save to localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem('retirement-sim-inputs', JSON.stringify(inputs));
+    } catch (e) {}
+  }, [inputs]);
   
   const [viewMode, setViewMode] = useState('before');
   const [hoveredYear, setHoveredYear] = useState(null);
