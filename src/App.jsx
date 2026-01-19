@@ -1146,7 +1146,7 @@ const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, i
     match: { label: 'Employer Match', value: match, col: 0, color: '#fbbf24' },
     // Column 1: Where it goes
     taxes: { label: 'Taxes', value: totalTax, col: 1, color: '#ef4444' },
-    spending: { label: 'Spending', value: Math.max(0, spending), col: 1, color: '#fb923c' },
+    spending: { label: 'Net Spending', value: Math.max(0, spending), col: 1, color: '#fb923c' },
     savings: { label: 'Savings', value: totalInvested, col: 1, color: '#4ade80' },
     // Column 2: Investment accounts
     k401: { label: '401k', value: annual.pretax401k + match, col: 2, color: '#f97316' },
@@ -1273,9 +1273,9 @@ const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, i
         </div>
         
         <div style={{ background: 'rgba(251,146,60,0.1)', borderRadius: '8px', padding: '10px', borderLeft: '3px solid #fb923c' }}>
-          <div style={{ color: '#64748b', fontSize: '9px', textTransform: 'uppercase' }}>Spending</div>
-          <div style={{ color: '#fb923c', fontSize: '16px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(inputs.annualSpend)}</div>
-          <div style={{ color: '#64748b', fontSize: '8px', marginTop: '2px' }}>incl. {fmt(fsa)} FSA</div>
+          <div style={{ color: '#64748b', fontSize: '9px', textTransform: 'uppercase' }}>Net Spending</div>
+          <div style={{ color: '#fb923c', fontSize: '16px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(Math.max(0, spending))}</div>
+          <div style={{ color: '#64748b', fontSize: '8px', marginTop: '2px' }}>= income − taxes − savings</div>
         </div>
         
         <div style={{ background: 'rgba(251,191,36,0.1)', borderRadius: '8px', padding: '10px', borderLeft: '3px solid #fbbf24' }}>
