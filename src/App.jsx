@@ -403,8 +403,22 @@ const RetirementSimulator = () => {
         <label style={{ color: '#94a3b8', fontSize: '10px' }}>{label}</label>
         <span style={{ color: '#f8fafc', fontSize: '10px', fontFamily: 'monospace' }}>{format(value)}{suffix}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: '100%', accentColor: '#4ade80', height: '4px' }} />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{
+          width: '100%',
+          accentColor: '#4ade80',
+          height: '6px',
+          touchAction: 'none',
+          WebkitAppearance: 'none',
+          cursor: 'pointer',
+        }}
+      />
     </div>
   );
   
@@ -510,7 +524,7 @@ const RetirementSimulator = () => {
             <Toggle label="401k" checked={inputs.enable401k} onChange={(v) => updateInput('enable401k', v)} color={colors.pretax} />
             {inputs.enable401k && (
               <div style={{ marginLeft: '20px', marginTop: '6px', marginBottom: '10px' }}>
-                <InputSlider label="Annual Contribution" value={inputs.contribution401k} onChange={(v) => updateInput('contribution401k', v)} min={0} max={50000} step={500} format={fmt} />
+                <InputSlider label="Annual Contribution" value={inputs.contribution401k} onChange={(v) => updateInput('contribution401k', v)} min={0} max={IRS_LIMITS.employee401k * 2} step={500} format={fmt} />
                 <InputSlider label="Employer Match" value={inputs.match401k} onChange={(v) => updateInput('match401k', v)} min={0} max={30000} step={250} format={fmt} />
                 <InputSlider label="Starting Balance" value={inputs.initial401k} onChange={(v) => updateInput('initial401k', v)} min={0} max={2000000} step={10000} format={fmt} />
                 <LimitWarning value={inputs.contribution401k} limit={IRS_LIMITS.employee401k * 2} label="for 2 people" />
@@ -520,7 +534,7 @@ const RetirementSimulator = () => {
             <Toggle label="HSA (Shoebox)" checked={inputs.enableHSA} onChange={(v) => updateInput('enableHSA', v)} color={colors.hsa} />
             {inputs.enableHSA && (
               <div style={{ marginLeft: '20px', marginTop: '6px', marginBottom: '10px' }}>
-                <InputSlider label="Annual Contribution" value={inputs.contributionHSA} onChange={(v) => updateInput('contributionHSA', v)} min={0} max={10000} step={100} format={fmt} />
+                <InputSlider label="Annual Contribution" value={inputs.contributionHSA} onChange={(v) => updateInput('contributionHSA', v)} min={0} max={IRS_LIMITS.hsaFamily} step={50} format={fmt} />
                 <LimitWarning value={inputs.contributionHSA} limit={IRS_LIMITS.hsaFamily} label="family" />
                 <InputSlider label="Starting Balance" value={inputs.initialHSA} onChange={(v) => updateInput('initialHSA', v)} min={0} max={100000} step={1000} format={fmt} />
               </div>
@@ -529,7 +543,7 @@ const RetirementSimulator = () => {
             <Toggle label="Backdoor Roth IRA" checked={inputs.enableBackdoorRoth} onChange={(v) => updateInput('enableBackdoorRoth', v)} color={colors.roth} />
             {inputs.enableBackdoorRoth && (
               <div style={{ marginLeft: '20px', marginTop: '6px', marginBottom: '10px' }}>
-                <InputSlider label="Annual Contribution" value={inputs.contributionBackdoorRoth} onChange={(v) => updateInput('contributionBackdoorRoth', v)} min={0} max={15000} step={500} format={fmt} />
+                <InputSlider label="Annual Contribution" value={inputs.contributionBackdoorRoth} onChange={(v) => updateInput('contributionBackdoorRoth', v)} min={0} max={IRS_LIMITS.backdoorRoth * 2} step={500} format={fmt} />
                 <LimitWarning value={inputs.contributionBackdoorRoth} limit={IRS_LIMITS.backdoorRoth * 2} label="for 2 people" />
                 <InputSlider label="Starting Balance" value={inputs.initialBackdoorRoth} onChange={(v) => updateInput('initialBackdoorRoth', v)} min={0} max={500000} step={5000} format={fmt} />
               </div>
@@ -538,7 +552,7 @@ const RetirementSimulator = () => {
             <Toggle label="Mega Backdoor Roth" checked={inputs.enableMegaBackdoor} onChange={(v) => updateInput('enableMegaBackdoor', v)} color={colors.roth} />
             {inputs.enableMegaBackdoor && (
               <div style={{ marginLeft: '20px', marginTop: '6px', marginBottom: '10px' }}>
-                <InputSlider label="Annual Contribution" value={inputs.contributionMegaBackdoor} onChange={(v) => updateInput('contributionMegaBackdoor', v)} min={0} max={100000} step={1000} format={fmt} />
+                <InputSlider label="Annual Contribution" value={inputs.contributionMegaBackdoor} onChange={(v) => updateInput('contributionMegaBackdoor', v)} min={0} max={IRS_LIMITS.megaBackdoor * 2} step={1000} format={fmt} />
                 <LimitWarning value={inputs.contributionMegaBackdoor} limit={IRS_LIMITS.megaBackdoor * 2} label="for 2 people" />
                 <InputSlider label="Starting Balance" value={inputs.initialMegaBackdoor} onChange={(v) => updateInput('initialMegaBackdoor', v)} min={0} max={1000000} step={10000} format={fmt} />
               </div>
@@ -558,7 +572,7 @@ const RetirementSimulator = () => {
             <Toggle label="Dependent Care FSA" checked={inputs.enableDependentCareFSA} onChange={(v) => updateInput('enableDependentCareFSA', v)} color="#f472b6" />
             {inputs.enableDependentCareFSA && (
               <div style={{ marginLeft: '20px', marginTop: '6px', marginBottom: '10px' }}>
-                <InputSlider label="Annual ($5k max)" value={inputs.contributionDependentCareFSA} onChange={(v) => updateInput('contributionDependentCareFSA', v)} min={0} max={6000} step={100} format={fmt} />
+                <InputSlider label="Annual Contribution" value={inputs.contributionDependentCareFSA} onChange={(v) => updateInput('contributionDependentCareFSA', v)} min={0} max={IRS_LIMITS.dependentCareFSA} step={100} format={fmt} />
                 <LimitWarning value={inputs.contributionDependentCareFSA} limit={IRS_LIMITS.dependentCareFSA} label="per household" />
               </div>
             )}
@@ -785,12 +799,17 @@ const RetirementSimulator = () => {
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         {selectedYear.taxablePrincipal + selectedYear.taxableGains > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.taxable }} />
-                              <span style={{ color: '#94a3b8' }}>Taxable</span>
-                            </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.taxablePrincipal + selectedYear.taxableGains)}</span>
+                          <div style={{ fontSize: '9px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.taxable }} />
+                                <span style={{ color: '#94a3b8' }}>Taxable</span>
+                              </span>
+                              <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.taxablePrincipal + selectedYear.taxableGains)}</span>
+                            </div>
+                            <div style={{ paddingLeft: '12px', color: '#64748b', fontSize: '8px' }}>
+                              Basis: {fmt(selectedYear.taxablePrincipal)} | Gains: {fmt(selectedYear.taxableGains)}
+                            </div>
                           </div>
                         )}
                         {selectedYear.mbdPrincipal + selectedYear.backdoorUnlocked > 0 && (
@@ -910,7 +929,8 @@ const RetirementSimulator = () => {
                     <div style={{ background: `${colors.taxable}15`, borderRadius: '5px', padding: '6px', borderLeft: `3px solid ${colors.taxable}` }}>
                       <div style={{ color: '#64748b', fontSize: '8px' }}>Taxable</div>
                       <div style={{ color: colors.taxable, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.totalTaxable)}</div>
-                      <div style={{ color: '#7dd3fc', fontSize: '8px' }}>−{fmt(selectedYear.taxCapGains)} tax</div>
+                      <div style={{ color: '#64748b', fontSize: '7px' }}>Basis: {fmt(selectedYear.taxablePrincipal)}</div>
+                      <div style={{ color: '#7dd3fc', fontSize: '8px' }}>−{fmt(selectedYear.taxCapGains)} tax on {fmt(selectedYear.taxableGains)} gains</div>
                     </div>
                   </>
                 )}
