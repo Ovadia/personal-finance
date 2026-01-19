@@ -138,6 +138,8 @@ const RetirementSimulator = () => {
     grossIncome: 500000,
     annualSpend: 150000,
     growthRate: 7,
+    inflationRate: 3,
+    showTodaysDollars: true,
     location: 'nyc', // 'nyc' or 'nj'
 
     // Account toggles and amounts
@@ -197,7 +199,13 @@ const RetirementSimulator = () => {
   const fmt = (n) => {
     if (Math.abs(n) >= 1000000) return `$${(n/1000000).toFixed(1)}M`;
     if (Math.abs(n) >= 1000) return `$${Math.round(n/1000)}k`;
-    return `$${n}`;
+    return `$${Math.round(n)}`;
+  };
+
+  // Adjust for inflation - converts future dollars to today's purchasing power
+  const toTodaysDollars = (amount, yearsFromNow) => {
+    if (!inputs.showTodaysDollars) return amount;
+    return amount / Math.pow(1 + inputs.inflationRate / 100, yearsFromNow);
   };
   
   // Calculate derived values
@@ -364,29 +372,57 @@ const RetirementSimulator = () => {
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   
-  const maxValue = Math.max(...years.map(y => y.grandTotal), 1);
+  // Apply inflation adjustment to year data for display
+  const adjustedYears = years.map(y => {
+    const discount = toTodaysDollars(1, y.year);
+    return {
+      ...y,
+      // Adjusted values for display
+      adj_pretax401k: Math.round(y.pretax401k * discount),
+      adj_totalRoth: Math.round(y.totalRoth * discount),
+      adj_totalHSA: Math.round(y.totalHSA * discount),
+      adj_totalTaxable: Math.round(y.totalTaxable * discount),
+      adj_grandTotal: Math.round(y.grandTotal * discount),
+      adj_afterTax: Math.round(y.afterTax * discount),
+      adj_accessibleBefore: Math.round(y.accessibleBefore * discount),
+      adj_lockedBefore: Math.round(y.lockedBefore * discount),
+      adj_taxablePrincipal: Math.round(y.taxablePrincipal * discount),
+      adj_taxableGains: Math.round(y.taxableGains * discount),
+      adj_mbdPrincipal: Math.round(y.mbdPrincipal * discount),
+      adj_mbdGains: Math.round(y.mbdGains * discount),
+      adj_backdoorUnlocked: Math.round(y.backdoorUnlocked * discount),
+      adj_backdoorLocked: Math.round(y.backdoorLocked * discount),
+      adj_backdoorGains: Math.round(y.backdoorGains * discount),
+      adj_hsaPrincipal: Math.round(y.hsaPrincipal * discount),
+      adj_hsaGains: Math.round(y.hsaGains * discount),
+      adj_tax401k: Math.round(y.tax401k * discount),
+      adj_taxCapGains: Math.round(y.taxCapGains * discount),
+    };
+  });
+
+  const maxValue = Math.max(...adjustedYears.map(y => y.adj_grandTotal), 1);
   const yScale = (v) => chartHeight - (v / maxValue) * chartHeight;
-  const xScale = (i) => (i / Math.max(years.length - 1, 1)) * chartWidth;
-  
-  const stackedData = years.map(y => {
+  const xScale = (i) => (i / Math.max(adjustedYears.length - 1, 1)) * chartWidth;
+
+  const stackedData = adjustedYears.map(y => {
     if (viewMode === 'before') {
       return {
         ...y,
-        a_taxable: y.taxablePrincipal + y.taxableGains,
-        a_hsa: y.taxablePrincipal + y.taxableGains + y.hsaPrincipal,
-        a_roth: y.taxablePrincipal + y.taxableGains + y.hsaPrincipal + y.mbdPrincipal + y.backdoorUnlocked,
-        l_start: y.accessibleBefore,
-        l_rothLock: y.accessibleBefore + y.backdoorLocked + y.mbdGains + y.backdoorGains,
-        l_hsa: y.accessibleBefore + y.backdoorLocked + y.mbdGains + y.backdoorGains + y.hsaGains,
-        l_401k: y.grandTotal,
+        a_taxable: y.adj_taxablePrincipal + y.adj_taxableGains,
+        a_hsa: y.adj_taxablePrincipal + y.adj_taxableGains + y.adj_hsaPrincipal,
+        a_roth: y.adj_taxablePrincipal + y.adj_taxableGains + y.adj_hsaPrincipal + y.adj_mbdPrincipal + y.adj_backdoorUnlocked,
+        l_start: y.adj_accessibleBefore,
+        l_rothLock: y.adj_accessibleBefore + y.adj_backdoorLocked + y.adj_mbdGains + y.adj_backdoorGains,
+        l_hsa: y.adj_accessibleBefore + y.adj_backdoorLocked + y.adj_mbdGains + y.adj_backdoorGains + y.adj_hsaGains,
+        l_401k: y.adj_grandTotal,
       };
     } else {
       return {
         ...y,
-        s_taxable: y.totalTaxable,
-        s_hsa: y.totalTaxable + y.totalHSA,
-        s_roth: y.totalTaxable + y.totalHSA + y.totalRoth,
-        s_401k: y.grandTotal,
+        s_taxable: y.adj_totalTaxable,
+        s_hsa: y.adj_totalTaxable + y.adj_totalHSA,
+        s_roth: y.adj_totalTaxable + y.adj_totalHSA + y.adj_totalRoth,
+        s_401k: y.adj_grandTotal,
       };
     }
   });
@@ -406,8 +442,8 @@ const RetirementSimulator = () => {
   // On mobile: use tapped selection; on desktop: hover takes priority, fall back to tapped
   const effectiveYearIndex = hoveredYear !== null
     ? hoveredYear
-    : (selectedYearIndex !== null ? selectedYearIndex : years.length - 1);
-  const selectedYear = years[effectiveYearIndex];
+    : (selectedYearIndex !== null ? selectedYearIndex : adjustedYears.length - 1);
+  const selectedYear = adjustedYears[effectiveYearIndex];
   const colors = {
     pretax: '#f97316',
     roth: '#4ade80',
@@ -598,7 +634,33 @@ const RetirementSimulator = () => {
             <InputSlider label="Gross Income" value={inputs.grossIncome} onChange={(v) => updateInput('grossIncome', v)} min={100000} max={2000000} step={10000} format={fmt} />
             <InputSlider label="Annual Spend" value={inputs.annualSpend} onChange={(v) => updateInput('annualSpend', v)} min={50000} max={500000} step={5000} format={fmt} />
             <InputSlider label="Growth Rate" value={inputs.growthRate} onChange={(v) => updateInput('growthRate', v)} min={3} max={12} step={0.5} suffix="%" />
-            
+            <InputSlider label="Inflation Rate" value={inputs.inflationRate} onChange={(v) => updateInput('inflationRate', v)} min={0} max={6} step={0.5} suffix="%" />
+
+            <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+              <div
+                onClick={() => updateInput('showTodaysDollars', !inputs.showTodaysDollars)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px 10px',
+                  background: inputs.showTodaysDollars ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.02)',
+                  borderRadius: '6px',
+                  border: `1px solid ${inputs.showTodaysDollars ? '#4ade80' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                <div style={{
+                  width: '14px', height: '14px', borderRadius: '3px',
+                  background: inputs.showTodaysDollars ? '#4ade80' : 'transparent',
+                  border: `2px solid ${inputs.showTodaysDollars ? '#4ade80' : '#64748b'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {inputs.showTodaysDollars && <span style={{ color: '#000', fontSize: '9px', fontWeight: 'bold' }}>✓</span>}
+                </div>
+                <div>
+                  <span style={{ color: inputs.showTodaysDollars ? '#f8fafc' : '#64748b', fontSize: '11px', fontWeight: 500 }}>Show in today's dollars</span>
+                  <div style={{ color: '#64748b', fontSize: '9px' }}>Adjust for {inputs.inflationRate}% inflation</div>
+                </div>
+              </div>
+            </div>
+
             <div style={{ marginTop: '8px' }}>
               <label style={{ color: '#94a3b8', fontSize: '10px', display: 'block', marginBottom: '4px' }}>Location</label>
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -778,7 +840,7 @@ const RetirementSimulator = () => {
                   {(inputs.enableMegaBackdoor || inputs.enableBackdoorRoth) && <path d={areaPath(stackedData, 'l_start', 'l_rothLock')} fill={colors.roth} opacity="0.4" />}
                   {inputs.enableHSA && <path d={areaPath(stackedData, 'l_rothLock', 'l_hsa')} fill={colors.hsa} opacity="0.4" />}
                   {inputs.enable401k && <path d={areaPath(stackedData, inputs.enableHSA ? 'l_hsa' : (inputs.enableMegaBackdoor || inputs.enableBackdoorRoth ? 'l_rothLock' : 'l_start'), 'l_401k')} fill={colors.pretax} opacity="0.5" />}
-                  <path d={stackedData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(d.accessibleBefore)}`).join(' ')}
+                  <path d={stackedData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(d.adj_accessibleBefore)}`).join(' ')}
                     fill="none" stroke="#fbbf24" strokeWidth="2" strokeDasharray="6,3" opacity="0.8" />
                 </>
               ) : (
@@ -790,13 +852,13 @@ const RetirementSimulator = () => {
                 </>
               )}
               
-              {years.filter((_, i) => i % Math.ceil(totalYears / 6) === 0 || i === totalYears).map((y) => (
+              {adjustedYears.filter((_, i) => i % Math.ceil(totalYears / 6) === 0 || i === totalYears).map((y) => (
                 <text key={y.year} x={xScale(y.year)} y={chartHeight + 15} textAnchor="middle" fill="#94a3b8" fontSize="9">{y.age}</text>
               ))}
               <text x={chartWidth / 2} y={chartHeight + 32} textAnchor="middle" fill="#64748b" fontSize="10">Age</text>
-              
-              {years.map((y, i) => (
-                <rect key={i} x={xScale(i) - chartWidth / (years.length * 2)} y={0} width={chartWidth / Math.max(years.length, 1)} height={chartHeight}
+
+              {adjustedYears.map((y, i) => (
+                <rect key={i} x={xScale(i) - chartWidth / (adjustedYears.length * 2)} y={0} width={chartWidth / Math.max(adjustedYears.length, 1)} height={chartHeight}
                   fill="transparent"
                   onClick={() => setSelectedYearIndex(i)}
                   onMouseEnter={() => !isMobile && setHoveredYear(i)}
@@ -808,7 +870,7 @@ const RetirementSimulator = () => {
               )}
               {/* Selected year dot marker */}
               {(hoveredYear !== null || selectedYearIndex !== null) && (
-                <circle cx={xScale(effectiveYearIndex)} cy={yScale(years[effectiveYearIndex]?.grandTotal || 0)} r="5" fill="#4ade80" stroke="#0c0f1a" strokeWidth="2" />
+                <circle cx={xScale(effectiveYearIndex)} cy={yScale(adjustedYears[effectiveYearIndex]?.adj_grandTotal || 0)} r="5" fill="#4ade80" stroke="#0c0f1a" strokeWidth="2" />
               )}
             </g>
           </svg>
@@ -864,9 +926,12 @@ const RetirementSimulator = () => {
           {/* Selected year detail */}
           {selectedYear && (
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '8px', padding: '12px', marginTop: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 600 }}>Age {selectedYear.age}</span>
-                <span style={{ color: '#f8fafc', fontSize: '12px' }}>{fmt(selectedYear.grandTotal)} → <span style={{ color: '#4ade80' }}>{fmt(selectedYear.afterTax)} after tax</span></span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div>
+                  <span style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 600 }}>Age {selectedYear.age}</span>
+                  {inputs.showTodaysDollars && <span style={{ color: '#64748b', fontSize: '10px', marginLeft: '8px' }}>(today's $)</span>}
+                </div>
+                <span style={{ color: '#f8fafc', fontSize: '12px' }}>{fmt(selectedYear.adj_grandTotal)} → <span style={{ color: '#4ade80' }}>{fmt(selectedYear.adj_afterTax)} after tax</span></span>
               </div>
               
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? (viewMode === 'before' ? '1fr' : 'repeat(2, 1fr)') : (viewMode === 'before' ? '1fr 1fr' : 'repeat(4, 1fr)'), gap: '8px' }}>
@@ -874,62 +939,62 @@ const RetirementSimulator = () => {
                   <>
                     <div style={{ background: 'rgba(74,222,128,0.1)', borderRadius: '6px', padding: '10px', border: '1px solid rgba(74,222,128,0.2)' }}>
                       <div style={{ color: '#4ade80', fontSize: '10px', fontWeight: 600, marginBottom: '6px' }}>✓ ACCESSIBLE NOW</div>
-                      <div style={{ color: '#4ade80', fontSize: '18px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.accessibleBefore)}</div>
-                      <div style={{ color: '#64748b', fontSize: '9px', marginBottom: '8px' }}>{Math.round(selectedYear.accessibleBefore / selectedYear.grandTotal * 100)}% of portfolio</div>
-                      
+                      <div style={{ color: '#4ade80', fontSize: '18px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_accessibleBefore)}</div>
+                      <div style={{ color: '#64748b', fontSize: '9px', marginBottom: '8px' }}>{Math.round(selectedYear.adj_accessibleBefore / selectedYear.adj_grandTotal * 100)}% of portfolio</div>
+
                       {/* Mini stacked bar */}
                       <div style={{ height: '16px', borderRadius: '4px', overflow: 'hidden', display: 'flex', marginBottom: '8px' }}>
-                        {selectedYear.taxablePrincipal + selectedYear.taxableGains > 0 && (
-                          <div style={{ 
-                            width: `${(selectedYear.taxablePrincipal + selectedYear.taxableGains) / selectedYear.accessibleBefore * 100}%`, 
-                            background: colors.taxable 
+                        {selectedYear.adj_taxablePrincipal + selectedYear.adj_taxableGains > 0 && (
+                          <div style={{
+                            width: `${(selectedYear.adj_taxablePrincipal + selectedYear.adj_taxableGains) / selectedYear.adj_accessibleBefore * 100}%`,
+                            background: colors.taxable
                           }} />
                         )}
-                        {selectedYear.mbdPrincipal + selectedYear.backdoorUnlocked > 0 && (
-                          <div style={{ 
-                            width: `${(selectedYear.mbdPrincipal + selectedYear.backdoorUnlocked) / selectedYear.accessibleBefore * 100}%`, 
-                            background: colors.roth 
+                        {selectedYear.adj_mbdPrincipal + selectedYear.adj_backdoorUnlocked > 0 && (
+                          <div style={{
+                            width: `${(selectedYear.adj_mbdPrincipal + selectedYear.adj_backdoorUnlocked) / selectedYear.adj_accessibleBefore * 100}%`,
+                            background: colors.roth
                           }} />
                         )}
-                        {selectedYear.hsaPrincipal > 0 && (
-                          <div style={{ 
-                            width: `${selectedYear.hsaPrincipal / selectedYear.accessibleBefore * 100}%`, 
-                            background: colors.hsa 
+                        {selectedYear.adj_hsaPrincipal > 0 && (
+                          <div style={{
+                            width: `${selectedYear.adj_hsaPrincipal / selectedYear.adj_accessibleBefore * 100}%`,
+                            background: colors.hsa
                           }} />
                         )}
                       </div>
-                      
+
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        {selectedYear.taxablePrincipal + selectedYear.taxableGains > 0 && (
+                        {selectedYear.adj_taxablePrincipal + selectedYear.adj_taxableGains > 0 && (
                           <div style={{ fontSize: '9px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.taxable }} />
                                 <span style={{ color: '#94a3b8' }}>Taxable</span>
                               </span>
-                              <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.taxablePrincipal + selectedYear.taxableGains)}</span>
+                              <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_taxablePrincipal + selectedYear.adj_taxableGains)}</span>
                             </div>
                             <div style={{ paddingLeft: '12px', color: '#64748b', fontSize: '8px' }}>
-                              Basis: {fmt(selectedYear.taxablePrincipal)} | Gains: {fmt(selectedYear.taxableGains)}
+                              Basis: {fmt(selectedYear.adj_taxablePrincipal)} | Gains: {fmt(selectedYear.adj_taxableGains)}
                             </div>
                           </div>
                         )}
-                        {selectedYear.mbdPrincipal + selectedYear.backdoorUnlocked > 0 && (
+                        {selectedYear.adj_mbdPrincipal + selectedYear.adj_backdoorUnlocked > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.roth }} />
                               <span style={{ color: '#94a3b8' }}>Roth principal</span>
                             </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.mbdPrincipal + selectedYear.backdoorUnlocked)}</span>
+                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_mbdPrincipal + selectedYear.adj_backdoorUnlocked)}</span>
                           </div>
                         )}
-                        {selectedYear.hsaPrincipal > 0 && (
+                        {selectedYear.adj_hsaPrincipal > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.hsa }} />
                               <span style={{ color: '#94a3b8' }}>HSA (shoebox)</span>
                             </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.hsaPrincipal)}</span>
+                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_hsaPrincipal)}</span>
                           </div>
                         )}
                       </div>
@@ -937,115 +1002,116 @@ const RetirementSimulator = () => {
                     
                     <div style={{ background: 'rgba(239,68,68,0.1)', borderRadius: '6px', padding: '10px', border: '1px solid rgba(239,68,68,0.2)' }}>
                       <div style={{ color: '#ef4444', fontSize: '10px', fontWeight: 600, marginBottom: '6px' }}>🔒 LOCKED UNTIL 59½</div>
-                      <div style={{ color: '#ef4444', fontSize: '18px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.lockedBefore)}</div>
-                      <div style={{ color: '#64748b', fontSize: '9px', marginBottom: '8px' }}>{Math.round(selectedYear.lockedBefore / selectedYear.grandTotal * 100)}% of portfolio</div>
-                      
+                      <div style={{ color: '#ef4444', fontSize: '18px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_lockedBefore)}</div>
+                      <div style={{ color: '#64748b', fontSize: '9px', marginBottom: '8px' }}>{Math.round(selectedYear.adj_lockedBefore / selectedYear.adj_grandTotal * 100)}% of portfolio</div>
+
                       {/* Mini stacked bar */}
                       <div style={{ height: '16px', borderRadius: '4px', overflow: 'hidden', display: 'flex', marginBottom: '8px' }}>
-                        {selectedYear.pretax401k > 0 && (
-                          <div style={{ 
-                            width: `${selectedYear.pretax401k / selectedYear.lockedBefore * 100}%`, 
-                            background: colors.pretax 
+                        {selectedYear.adj_pretax401k > 0 && (
+                          <div style={{
+                            width: `${selectedYear.adj_pretax401k / selectedYear.adj_lockedBefore * 100}%`,
+                            background: colors.pretax
                           }} />
                         )}
-                        {selectedYear.mbdGains + selectedYear.backdoorGains + selectedYear.backdoorLocked > 0 && (
-                          <div style={{ 
-                            width: `${(selectedYear.mbdGains + selectedYear.backdoorGains + selectedYear.backdoorLocked) / selectedYear.lockedBefore * 100}%`, 
-                            background: colors.roth 
+                        {selectedYear.adj_mbdGains + selectedYear.adj_backdoorGains + selectedYear.adj_backdoorLocked > 0 && (
+                          <div style={{
+                            width: `${(selectedYear.adj_mbdGains + selectedYear.adj_backdoorGains + selectedYear.adj_backdoorLocked) / selectedYear.adj_lockedBefore * 100}%`,
+                            background: colors.roth
                           }} />
                         )}
-                        {selectedYear.hsaGains > 0 && (
-                          <div style={{ 
-                            width: `${selectedYear.hsaGains / selectedYear.lockedBefore * 100}%`, 
-                            background: colors.hsa 
+                        {selectedYear.adj_hsaGains > 0 && (
+                          <div style={{
+                            width: `${selectedYear.adj_hsaGains / selectedYear.adj_lockedBefore * 100}%`,
+                            background: colors.hsa
                           }} />
                         )}
                       </div>
-                      
+
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        {selectedYear.pretax401k > 0 && (
+                        {selectedYear.adj_pretax401k > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.pretax }} />
                               <span style={{ color: '#94a3b8' }}>401k</span>
                             </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.pretax401k)}</span>
+                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_pretax401k)}</span>
                           </div>
                         )}
-                        {selectedYear.mbdGains + selectedYear.backdoorGains > 0 && (
+                        {selectedYear.adj_mbdGains + selectedYear.adj_backdoorGains > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.roth }} />
                               <span style={{ color: '#94a3b8' }}>Roth gains</span>
                             </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.mbdGains + selectedYear.backdoorGains)}</span>
+                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_mbdGains + selectedYear.adj_backdoorGains)}</span>
                           </div>
                         )}
-                        {selectedYear.backdoorLocked > 0 && (
+                        {selectedYear.adj_backdoorLocked > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.roth, opacity: 0.6 }} />
                               <span style={{ color: '#94a3b8' }}>Roth (5yr lock)</span>
                             </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.backdoorLocked)}</span>
+                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_backdoorLocked)}</span>
                           </div>
                         )}
-                        {selectedYear.hsaGains > 0 && (
+                        {selectedYear.adj_hsaGains > 0 && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', alignItems: 'center' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: colors.hsa }} />
                               <span style={{ color: '#94a3b8' }}>HSA gains</span>
                             </span>
-                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.hsaGains)}</span>
+                            <span style={{ color: '#f8fafc', fontFamily: 'monospace' }}>{fmt(selectedYear.adj_hsaGains)}</span>
                           </div>
                         )}
                       </div>
                     </div>
-                    
-                    {/* Total Roth callout for Judah */}
+
+                    {/* Total Roth callout */}
                     <div style={{ gridColumn: '1 / -1', background: 'rgba(74,222,128,0.05)', borderRadius: '6px', padding: '8px 10px', border: '1px solid rgba(74,222,128,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: colors.roth }} />
                         <span style={{ color: '#94a3b8', fontSize: '10px' }}>Total Roth (principal + gains)</span>
                       </div>
-                      <span style={{ color: colors.roth, fontSize: '14px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.totalRoth)}</span>
+                      <span style={{ color: colors.roth, fontSize: '14px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_totalRoth)}</span>
                     </div>
                   </>
                 ) : (
                   <>
                     <div style={{ background: `${colors.pretax}15`, borderRadius: '5px', padding: '6px', borderLeft: `3px solid ${colors.pretax}` }}>
                       <div style={{ color: '#64748b', fontSize: '8px' }}>401k</div>
-                      <div style={{ color: colors.pretax, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.pretax401k)}</div>
-                      <div style={{ color: '#fb923c', fontSize: '8px' }}>−{fmt(selectedYear.tax401k)} tax</div>
+                      <div style={{ color: colors.pretax, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_pretax401k)}</div>
+                      <div style={{ color: '#fb923c', fontSize: '8px' }}>−{fmt(selectedYear.adj_tax401k)} tax</div>
                     </div>
                     <div style={{ background: `${colors.roth}15`, borderRadius: '5px', padding: '6px', borderLeft: `3px solid ${colors.roth}` }}>
                       <div style={{ color: '#64748b', fontSize: '8px' }}>Roth</div>
-                      <div style={{ color: colors.roth, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.totalRoth)}</div>
+                      <div style={{ color: colors.roth, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_totalRoth)}</div>
                       <div style={{ color: '#86efac', fontSize: '8px' }}>$0 tax</div>
                     </div>
                     <div style={{ background: `${colors.hsa}15`, borderRadius: '5px', padding: '6px', borderLeft: `3px solid ${colors.hsa}` }}>
                       <div style={{ color: '#64748b', fontSize: '8px' }}>HSA</div>
-                      <div style={{ color: colors.hsa, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.totalHSA)}</div>
+                      <div style={{ color: colors.hsa, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_totalHSA)}</div>
                       <div style={{ color: '#c084fc', fontSize: '8px' }}>$0 tax</div>
                     </div>
                     <div style={{ background: `${colors.taxable}15`, borderRadius: '5px', padding: '6px', borderLeft: `3px solid ${colors.taxable}` }}>
                       <div style={{ color: '#64748b', fontSize: '8px' }}>Taxable</div>
-                      <div style={{ color: colors.taxable, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.totalTaxable)}</div>
-                      <div style={{ color: '#64748b', fontSize: '7px' }}>Basis: {fmt(selectedYear.taxablePrincipal)}</div>
-                      <div style={{ color: '#7dd3fc', fontSize: '8px' }}>−{fmt(selectedYear.taxCapGains)} tax on {fmt(selectedYear.taxableGains)} gains</div>
+                      <div style={{ color: colors.taxable, fontSize: '13px', fontFamily: 'monospace', fontWeight: 600 }}>{fmt(selectedYear.adj_totalTaxable)}</div>
+                      <div style={{ color: '#64748b', fontSize: '7px' }}>Basis: {fmt(selectedYear.adj_taxablePrincipal)}</div>
+                      <div style={{ color: '#7dd3fc', fontSize: '8px' }}>−{fmt(selectedYear.adj_taxCapGains)} tax on {fmt(selectedYear.adj_taxableGains)} gains</div>
                     </div>
                   </>
                 )}
               </div>
             </div>
           )}
-          
+
           {/* Final summary */}
-          {years.length > 0 && (
+          {adjustedYears.length > 0 && (
             <div style={{ marginTop: '10px', padding: '10px 12px', background: 'rgba(74,222,128,0.1)', borderRadius: '6px', borderLeft: '3px solid #4ade80' }}>
               <span style={{ color: '#f1f5f9', fontSize: '11px' }}>
-                <strong style={{ color: '#4ade80' }}>At {inputs.retirementAge}:</strong> {fmt(years[years.length - 1].grandTotal)} total → {fmt(years[years.length - 1].afterTax)} after tax.
-                {' '}<span style={{ color: '#94a3b8' }}>{fmt(years[years.length - 1].totalRoth + years[years.length - 1].totalHSA)} tax-free.</span>
+                <strong style={{ color: '#4ade80' }}>At {inputs.retirementAge}:</strong> {fmt(adjustedYears[adjustedYears.length - 1].adj_grandTotal)} total → {fmt(adjustedYears[adjustedYears.length - 1].adj_afterTax)} after tax
+                {inputs.showTodaysDollars && <span style={{ color: '#64748b' }}> (today's $)</span>}
+                {'. '}<span style={{ color: '#94a3b8' }}>{fmt(adjustedYears[adjustedYears.length - 1].adj_totalRoth + adjustedYears[adjustedYears.length - 1].adj_totalHSA)} tax-free.</span>
               </span>
             </div>
           )}
