@@ -956,75 +956,57 @@ const RetirementSimulator = () => {
 
 // Annual Cash Flow Sankey Component
 const AnnualSankeyView = ({ inputs, taxes, annual, taxable, totalSavings, fmt, isMobile }) => {
-  const width = 750;
-  const height = 420;
-  const nodeWidth = 18;
+  const width = 700;
+  const height = 380;
+  const nodeWidth = 20;
 
   const grossIncome = inputs.grossIncome;
   const totalTax = Math.round(taxes.total);
   const match = annual.match401k;
   const fsa = annual.dependentCareFSA;
-  const commuterEmployer = annual.commuterEmployer;
 
-  // Pre-tax deductions come out of gross BEFORE taxes
-  const pretaxDeductions = annual.pretax401k + annual.hsa + fsa;
-  // Take-home = gross - pretax deductions - taxes
-  const takeHome = grossIncome - pretaxDeductions - totalTax;
-  // Post-tax savings (for Roth and taxable)
-  const postTaxSavings = annual.backdoorRoth + annual.megaBackdoor + Math.max(0, taxable);
+  // Total savings = all contributions (pre-tax come from gross, post-tax from take-home, but conceptually it's all "savings")
+  const totalInvested = annual.pretax401k + match + annual.hsa + annual.backdoorRoth + annual.megaBackdoor + Math.max(0, taxable);
+  // Spending = gross - taxes - savings - FSA (FSA is spent on childcare, not invested)
+  const spending = grossIncome - totalTax - totalInvested;
 
-  // Node data - corrected flow
+  // Simplified 3-column layout
   const nodes = {
+    // Column 0: Income
     gross: { label: 'Gross Income', value: grossIncome, col: 0, color: '#f8fafc' },
-    // Column 1: Where gross income goes
-    pretax401k: { label: '401k (pre-tax)', value: annual.pretax401k, col: 1, color: '#f97316' },
-    hsaPretax: { label: 'HSA (pre-tax)', value: annual.hsa, col: 1, color: '#a855f7' },
-    fsaPretax: { label: 'FSA (pre-tax)', value: fsa, col: 1, color: '#f472b6' },
+    match: { label: 'Employer Match', value: match, col: 0, color: '#fbbf24' },
+    // Column 1: Where it goes
     taxes: { label: 'Taxes', value: totalTax, col: 1, color: '#ef4444' },
-    takehome: { label: 'Take Home', value: takeHome, col: 1, color: '#4ade80' },
-    // Employer contributions (free money)
-    match: { label: '401k Match', value: match, col: 1, color: '#fbbf24' },
-    commuterBenefit: { label: 'Commuter', value: commuterEmployer, col: 1, color: '#06b6d4' },
-    // Column 2: Where take-home goes
-    spend: { label: 'Spending', value: Math.max(0, takeHome - postTaxSavings), col: 2, color: '#fb923c' },
-    postTaxSave: { label: 'Post-tax Savings', value: postTaxSavings, col: 2, color: '#4ade80' },
-    // Column 3: Account destinations
-    k401Total: { label: '401k Total', value: annual.pretax401k + match, col: 3, color: '#f97316' },
-    hsaTotal: { label: 'HSA', value: annual.hsa, col: 3, color: '#a855f7' },
-    roth: { label: 'Roth IRAs', value: annual.backdoorRoth + annual.megaBackdoor, col: 3, color: '#4ade80' },
-    taxableAcct: { label: 'Taxable', value: Math.max(0, taxable), col: 3, color: '#38bdf8' },
-    fsaSpent: { label: 'Childcare', value: fsa, col: 3, color: '#f472b6' },
-    transitSpent: { label: 'Transit', value: commuterEmployer, col: 3, color: '#06b6d4' },
+    spending: { label: 'Spending', value: Math.max(0, spending), col: 1, color: '#fb923c' },
+    savings: { label: 'Savings', value: totalInvested, col: 1, color: '#4ade80' },
+    // Column 2: Investment accounts
+    k401: { label: '401k', value: annual.pretax401k + match, col: 2, color: '#f97316' },
+    hsa: { label: 'HSA', value: annual.hsa, col: 2, color: '#a855f7' },
+    roth: { label: 'Roth', value: annual.backdoorRoth + annual.megaBackdoor, col: 2, color: '#4ade80' },
+    taxableAcct: { label: 'Taxable', value: Math.max(0, taxable), col: 2, color: '#38bdf8' },
   };
 
-  // Links - corrected flow
+  // Simplified links
   const links = [
-    // From gross income
-    { source: 'gross', target: 'pretax401k', value: annual.pretax401k },
-    { source: 'gross', target: 'hsaPretax', value: annual.hsa },
-    { source: 'gross', target: 'fsaPretax', value: fsa },
+    // Gross income splits
     { source: 'gross', target: 'taxes', value: totalTax },
-    { source: 'gross', target: 'takehome', value: takeHome },
-    // From take-home
-    { source: 'takehome', target: 'spend', value: Math.max(0, takeHome - postTaxSavings) },
-    { source: 'takehome', target: 'postTaxSave', value: postTaxSavings },
-    // Pre-tax to accounts
-    { source: 'pretax401k', target: 'k401Total', value: annual.pretax401k },
-    { source: 'match', target: 'k401Total', value: match },
-    { source: 'hsaPretax', target: 'hsaTotal', value: annual.hsa },
-    { source: 'fsaPretax', target: 'fsaSpent', value: fsa },
-    { source: 'commuterBenefit', target: 'transitSpent', value: commuterEmployer },
-    // Post-tax savings to accounts
-    { source: 'postTaxSave', target: 'roth', value: annual.backdoorRoth + annual.megaBackdoor },
-    { source: 'postTaxSave', target: 'taxableAcct', value: Math.max(0, taxable) },
+    { source: 'gross', target: 'spending', value: Math.max(0, spending) },
+    { source: 'gross', target: 'savings', value: totalInvested - match }, // exclude match, it comes separately
+    // Employer match goes to savings
+    { source: 'match', target: 'savings', value: match },
+    // Savings to accounts
+    { source: 'savings', target: 'k401', value: annual.pretax401k + match },
+    { source: 'savings', target: 'hsa', value: annual.hsa },
+    { source: 'savings', target: 'roth', value: annual.backdoorRoth + annual.megaBackdoor },
+    { source: 'savings', target: 'taxableAcct', value: Math.max(0, taxable) },
   ].filter(l => l.value > 0);
-  
-  // Calculate positions (4 columns now)
-  const colX = [40, 200, 400, 580];
-  const colHeaders = ['INCOME', 'DEDUCTIONS & TAXES', 'USE OF FUNDS', 'ACCOUNTS'];
+
+  // 3 columns
+  const colX = [50, 300, 550];
+  const colHeaders = ['INCOME', 'WHERE IT GOES', 'INVESTED IN'];
   
   // Group nodes by column
-  const cols = [[], [], [], []];
+  const cols = [[], [], []];
   Object.entries(nodes).forEach(([id, node]) => {
     cols[node.col].push({ id, ...node });
   });
