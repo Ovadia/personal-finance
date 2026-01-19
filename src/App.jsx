@@ -635,8 +635,8 @@ const RetirementSimulator = () => {
             <Toggle label="Mega Backdoor Roth" checked={inputs.enableMegaBackdoor} onChange={(v) => updateInput('enableMegaBackdoor', v)} color={colors.roth} />
             {inputs.enableMegaBackdoor && (
               <div style={{ marginLeft: '20px', marginTop: '6px', marginBottom: '10px' }}>
-                <InputSlider label="Annual Contribution" value={inputs.contributionMegaBackdoor} onChange={(v) => updateInput('contributionMegaBackdoor', v)} min={0} max={IRS_LIMITS.megaBackdoor * 2} step={1000} format={fmt} />
-                <LimitWarning value={inputs.contributionMegaBackdoor} limit={IRS_LIMITS.megaBackdoor * 2} label="for 2 people" />
+                <InputSlider label="Annual Contribution" value={inputs.contributionMegaBackdoor} onChange={(v) => updateInput('contributionMegaBackdoor', v)} min={0} max={Math.max(0, (IRS_LIMITS.total401k * 2) - inputs.contribution401k - inputs.match401k)} step={1000} format={fmt} />
+                <LimitWarning value={inputs.contributionMegaBackdoor} limit={Math.max(0, (IRS_LIMITS.total401k * 2) - inputs.contribution401k - inputs.match401k)} label="after 401k+match" />
                 <InputSlider label="Starting Balance" value={inputs.initialMegaBackdoor} onChange={(v) => updateInput('initialMegaBackdoor', v)} min={0} max={1000000} step={10000} format={fmt} />
               </div>
             )}
