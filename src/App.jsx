@@ -397,30 +397,89 @@ const RetirementSimulator = () => {
     taxable: '#38bdf8',
   };
   
-  const InputSlider = ({ label, value, onChange, min, max, step = 1, format = (v) => v, suffix = '' }) => (
-    <div style={{ marginBottom: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-        <label style={{ color: '#94a3b8', fontSize: '10px' }}>{label}</label>
-        <span style={{ color: '#f8fafc', fontSize: '10px', fontFamily: 'monospace' }}>{format(value)}{suffix}</span>
+  const InputSlider = ({ label, value, onChange, min, max, step = 1, format = (v) => v, suffix = '' }) => {
+    const [editing, setEditing] = useState(false);
+    const [editValue, setEditValue] = useState('');
+
+    const handleClick = () => {
+      setEditValue(String(value));
+      setEditing(true);
+    };
+
+    const handleBlur = () => {
+      const num = Number(editValue.replace(/[^0-9.-]/g, ''));
+      if (!isNaN(num)) {
+        onChange(Math.min(max, Math.max(min, num)));
+      }
+      setEditing(false);
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') handleBlur();
+      if (e.key === 'Escape') setEditing(false);
+    };
+
+    return (
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+          <label style={{ color: '#94a3b8', fontSize: '10px' }}>{label}</label>
+          {editing ? (
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              style={{
+                width: '80px',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid #4ade80',
+                borderRadius: '3px',
+                color: '#f8fafc',
+                fontSize: '10px',
+                fontFamily: 'monospace',
+                padding: '2px 4px',
+                textAlign: 'right',
+              }}
+            />
+          ) : (
+            <span
+              onClick={handleClick}
+              style={{
+                color: '#f8fafc',
+                fontSize: '10px',
+                fontFamily: 'monospace',
+                cursor: 'pointer',
+                padding: '2px 4px',
+                borderRadius: '3px',
+                background: 'rgba(255,255,255,0.05)',
+              }}
+              title="Click to edit"
+            >
+              {format(value)}{suffix}
+            </span>
+          )}
+        </div>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          style={{
+            width: '100%',
+            accentColor: '#4ade80',
+            height: '6px',
+            touchAction: 'none',
+            WebkitAppearance: 'none',
+            cursor: 'pointer',
+          }}
+        />
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{
-          width: '100%',
-          accentColor: '#4ade80',
-          height: '6px',
-          touchAction: 'none',
-          WebkitAppearance: 'none',
-          cursor: 'pointer',
-        }}
-      />
-    </div>
-  );
+    );
+  };
   
   const Toggle = ({ label, checked, onChange, color = '#4ade80' }) => (
     <div onClick={() => onChange(!checked)} style={{ 
