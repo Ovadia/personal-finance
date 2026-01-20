@@ -542,22 +542,17 @@ const RetirementSimulator = () => {
             </span>
           )}
         </div>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          style={{
-            width: '100%',
-            accentColor: '#4ade80',
-            height: '6px',
-            touchAction: 'none',
-            WebkitAppearance: 'none',
-            cursor: 'pointer',
-          }}
-        />
+        <div style={{ padding: '8px 0', margin: '-8px 0' }}>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            style={{ width: '100%' }}
+          />
+        </div>
       </div>
     );
   };
