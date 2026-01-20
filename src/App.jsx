@@ -167,6 +167,7 @@ const RetirementSimulator = () => {
     commuterEmployerContribution: 1560, // $130/mo x 12 months
 
     initialTaxable: 150000,
+    taxableCostBasis: 100000,
   };
 
   // Load from localStorage or use defaults
@@ -231,6 +232,7 @@ const RetirementSimulator = () => {
       backdoorRoth: inputs.enableBackdoorRoth ? inputs.initialBackdoorRoth : 0,
       megaBackdoor: inputs.enableMegaBackdoor ? inputs.initialMegaBackdoor : 0,
       taxable: inputs.initialTaxable,
+      taxableCostBasis: Math.min(inputs.taxableCostBasis, inputs.initialTaxable), // cost basis can't exceed balance
     };
     
     // Calculate taxes
@@ -281,17 +283,18 @@ const RetirementSimulator = () => {
         hsaPrincipal += initial.hsa;
         hsaGains += initial.hsa * (initialGrowth - 1);
         
-        // For taxable, track cost basis vs gains
+        // For taxable, track cost basis vs gains (existing gains grow too)
         const taxableTotal = initial.taxable * initialGrowth;
-        taxablePrincipal += initial.taxable;
-        taxableGains += taxableTotal - initial.taxable;
+        taxablePrincipal += initial.taxableCostBasis;
+        taxableGains += taxableTotal - initial.taxableCostBasis;
       } else {
         // Year 0 = starting point
         pretax401k = initial.pretax401k;
         mbdPrincipal = initial.megaBackdoor;
         backdoorUnlocked = initial.backdoorRoth;
         hsaPrincipal = initial.hsa;
-        taxablePrincipal = initial.taxable;
+        taxablePrincipal = initial.taxableCostBasis;
+        taxableGains = initial.taxable - initial.taxableCostBasis; // existing unrealized gains
       }
       
       // Add contributions for each year (assume contributions at start of year)
@@ -723,7 +726,13 @@ const RetirementSimulator = () => {
             
             <div style={{ marginTop: '8px', padding: '8px', background: 'rgba(56,189,248,0.1)', borderRadius: '6px', borderLeft: `3px solid ${colors.taxable}` }}>
               <label style={{ color: colors.taxable, fontSize: '10px', fontWeight: 600 }}>Taxable Brokerage</label>
-              <InputSlider label="Starting Balance" value={inputs.initialTaxable} onChange={(v) => updateInput('initialTaxable', v)} min={0} max={2000000} step={10000} format={fmt} />
+              <InputSlider label="Current Balance" value={inputs.initialTaxable} onChange={(v) => updateInput('initialTaxable', v)} min={0} max={5000000} step={10000} format={fmt} />
+              <InputSlider label="Cost Basis" value={inputs.taxableCostBasis} onChange={(v) => updateInput('taxableCostBasis', Math.min(v, inputs.initialTaxable))} min={0} max={inputs.initialTaxable} step={10000} format={fmt} />
+              {inputs.initialTaxable > inputs.taxableCostBasis && (
+                <div style={{ color: '#7dd3fc', fontSize: '8px', marginTop: '4px' }}>
+                  Unrealized gains: {fmt(inputs.initialTaxable - inputs.taxableCostBasis)}
+                </div>
+              )}
             </div>
           </div>
           
