@@ -23,8 +23,18 @@ const STORAGE_KEY = 'syrian-real-mode-inputs';
 const QUICK_MODE_KEY = 'syrian-lifestyle-inputs';
 const TOTAL_SCREENS = 7; // 6 input screens + 1 results
 
-function loadSavedInputs(): RealModeInputs {
+function loadSavedInputs(forceFromQuickMode: boolean): RealModeInputs {
   try {
+    // If coming from quick mode, always use fresh quick mode data
+    if (forceFromQuickMode) {
+      const quickSaved = localStorage.getItem(QUICK_MODE_KEY);
+      if (quickSaved) {
+        const quickInputs = JSON.parse(quickSaved) as LifestyleInputs;
+        const prefilled = prefillFromQuickMode(quickInputs);
+        return { ...defaultRealModeInputs, ...prefilled };
+      }
+    }
+
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       return { ...defaultRealModeInputs, ...JSON.parse(saved) };
@@ -45,8 +55,9 @@ function loadSavedInputs(): RealModeInputs {
 
 export default function RealModeCalculator() {
   const [searchParams] = useSearchParams();
+  const fromQuickMode = searchParams.get('from') === 'quick';
   const [currentScreen, setCurrentScreen] = useState(0);
-  const [inputs, setInputs] = useState<RealModeInputs>(loadSavedInputs);
+  const [inputs, setInputs] = useState<RealModeInputs>(() => loadSavedInputs(fromQuickMode));
 
   // Save to localStorage whenever inputs change
   useEffect(() => {

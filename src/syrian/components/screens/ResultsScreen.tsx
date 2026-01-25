@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CostBreakdown, LifestyleInputs, CategoryCosts } from '../../types';
 import { formatCurrencyFull, formatCurrency } from '../../calculator';
 
@@ -77,6 +78,7 @@ function DonutChart({ categories, total }: { categories: CategoryCosts; total: n
 }
 
 export function ResultsScreen({ breakdown, inputs, onRestart }: Props) {
+  const navigate = useNavigate();
   const [displayTotal, setDisplayTotal] = useState(0);
   const [animationComplete, setAnimationComplete] = useState(false);
 
@@ -176,34 +178,57 @@ export function ResultsScreen({ breakdown, inputs, onRestart }: Props) {
       </div>
 
       <div className="share-section">
-        <button className="share-btn" onClick={handleShare}>
-          <span>📤</span>
-          <span>Share Your Results</span>
-        </button>
-
         <div className="real-mode-cta">
-          <p>This is a rough estimate based on community averages.</p>
-          <p>
-            <strong>Want exact numbers?</strong> Real Mode coming soon with 30-year projections.
+          <p style={{ marginBottom: '0.5rem' }}>This is a rough estimate based on community averages.</p>
+          <p style={{ fontWeight: '600', marginBottom: '1rem' }}>
+            Ready to dial in your exact numbers?
           </p>
         </div>
 
         <button
-          onClick={onRestart}
+          onClick={() => navigate('/lifestyle/real?from=quick')}
           style={{
-            marginTop: '1rem',
             width: '100%',
-            padding: '0.75rem',
-            background: 'transparent',
-            border: '2px solid #e5e5e0',
+            padding: '1rem',
+            background: '#3d405b',
+            border: 'none',
             borderRadius: '12px',
-            color: '#4a4a4a',
+            color: 'white',
             cursor: 'pointer',
-            fontSize: '0.9rem',
+            fontSize: '1rem',
+            fontWeight: '600',
+            marginBottom: '0.75rem',
           }}
         >
-          Start Over
+          Customize Your Budget →
         </button>
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            className="share-btn"
+            onClick={handleShare}
+            style={{ flex: 1 }}
+          >
+            <span>📤</span>
+            <span>Share</span>
+          </button>
+
+          <button
+            onClick={onRestart}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              background: 'transparent',
+              border: '2px solid #e5e5e0',
+              borderRadius: '12px',
+              color: '#4a4a4a',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+            }}
+          >
+            Start Over
+          </button>
+        </div>
       </div>
     </div>
   );
