@@ -171,6 +171,7 @@ function StackedAreaChart({
 export function RealResultsScreen({ projection, inputs, onRestart }: Props) {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [showYearTable, setShowYearTable] = useState(false);
 
   const currentYear = projection.projection[0];
   const displayYear = selectedYear !== null ? projection.projection[selectedYear] : currentYear;
@@ -351,6 +352,78 @@ export function RealResultsScreen({ projection, inputs, onRestart }: Props) {
             </div>
           );
         })}
+      </div>
+
+      {/* Year-by-Year Table */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => setShowYearTable(!showYearTable)}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            background: showYearTable ? '#3d405b' : 'white',
+            color: showYearTable ? 'white' : '#3d405b',
+            border: '2px solid #3d405b',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            marginBottom: showYearTable ? '1rem' : 0,
+          }}
+        >
+          {showYearTable ? 'Hide' : 'Show'} Year-by-Year Table
+        </button>
+
+        {showYearTable && (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+              <thead>
+                <tr style={{ background: '#f5f5f2' }}>
+                  <th style={{ padding: '0.5rem', textAlign: 'left', position: 'sticky', left: 0, background: '#f5f5f2' }}>Year</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Housing</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Education</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Childcare</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Food</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Simchas</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Other</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right', fontWeight: '700' }}>Total</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Events</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projection.projection.map((year, idx) => {
+                  const other = year.costs.transportation + year.costs.insurance + year.costs.tzedakah + year.costs.extras;
+                  const isHighlight = year.totalAnnual === projection.peakYear.amount;
+                  return (
+                    <tr
+                      key={idx}
+                      style={{
+                        background: isHighlight ? '#fef2f2' : idx % 2 === 0 ? 'white' : '#fafafa',
+                        borderBottom: '1px solid #e5e5e0',
+                      }}
+                    >
+                      <td style={{ padding: '0.5rem', fontWeight: '600', position: 'sticky', left: 0, background: isHighlight ? '#fef2f2' : idx % 2 === 0 ? 'white' : '#fafafa' }}>
+                        {new Date().getFullYear() + idx}
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(year.costs.housing)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(year.costs.education)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(year.costs.childcare)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(year.costs.food)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(year.costs.simchas)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{formatCurrency(other)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: '700', color: isHighlight ? '#dc2626' : '#166534' }}>
+                        {formatCurrency(year.totalAnnual)}
+                      </td>
+                      <td style={{ padding: '0.5rem', fontSize: '0.7rem', color: '#666', maxWidth: '150px' }}>
+                        {year.events.map(e => e.description).join(', ')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Actions */}
