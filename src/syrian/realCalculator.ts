@@ -137,8 +137,36 @@ function calculateEducationForYear(inputs: RealModeInputs, year: number): number
 // ============ CHILDCARE ============
 
 function calculateChildcareForYear(inputs: RealModeInputs, year: number): number {
-  // Household help (day worker, etc.)
-  return COSTS.help[inputs.helpLevel];
+  let total = 0;
+
+  // Household help (cleaning, day worker, etc.) - static
+  total += COSTS.help[inputs.helpLevel];
+
+  // Nanny costs - dynamic based on children's ages
+  if (inputs.hasNanny && inputs.children.length > 0) {
+    // Find youngest child's age this year
+    const childAges = inputs.children.map((c) => getChildAgeInYear(c, year)).filter((age) => age >= 0);
+
+    if (childAges.length > 0) {
+      const youngestAge = Math.min(...childAges);
+
+      // Full nanny cost when youngest is under 5 (not in full-day school)
+      if (youngestAge < 5) {
+        total += inputs.nannyCost;
+      }
+      // 75% cost when youngest is 5-7 (in school but needs after-school care)
+      else if (youngestAge < 8) {
+        total += Math.round(inputs.nannyCost * 0.75);
+      }
+      // 50% cost when youngest is 8-12 (some after-school help)
+      else if (youngestAge < 13) {
+        total += Math.round(inputs.nannyCost * 0.5);
+      }
+      // No nanny needed once youngest is 13+
+    }
+  }
+
+  return total;
 }
 
 // ============ FOOD ============

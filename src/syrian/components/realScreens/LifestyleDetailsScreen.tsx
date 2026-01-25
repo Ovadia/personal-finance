@@ -144,7 +144,46 @@ export function LifestyleDetailsScreen({ inputs, updateInput }: Props) {
       </div>
 
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ fontWeight: '600', marginBottom: '0.75rem' }}>Household help</div>
+        <div style={{ fontWeight: '600', marginBottom: '0.75rem' }}>Nanny / Childcare</div>
+        <div
+          className={`toggle-container ${inputs.hasNanny ? 'active' : ''}`}
+          onClick={() => updateInput('hasNanny', !inputs.hasNanny)}
+          style={{ cursor: 'pointer', marginBottom: inputs.hasNanny ? '0.75rem' : 0 }}
+        >
+          <div className="toggle-label">
+            <div className="toggle-title">Have a nanny?</div>
+            <div className="toggle-cost">Cost scales down as kids get older</div>
+          </div>
+          <div className={`toggle-switch ${inputs.hasNanny ? 'active' : ''}`} />
+        </div>
+
+        {inputs.hasNanny && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
+              Annual nanny cost (when kids are young)
+            </label>
+            <input
+              type="number"
+              value={inputs.nannyCost}
+              onChange={(e) => updateInput('nannyCost', parseInt(e.target.value) || 0)}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '2px solid #e5e5e0',
+                borderRadius: '8px',
+                fontSize: '1rem',
+              }}
+              placeholder="60000"
+            />
+            <div style={{ fontSize: '0.8rem', color: '#8a8a8a', marginTop: '0.25rem' }}>
+              100% until youngest is 5 → 75% ages 5-7 → 50% ages 8-12 → 0% at 13+
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ fontWeight: '600', marginBottom: '0.75rem' }}>Household help (cleaning)</div>
         <select
           value={inputs.helpLevel}
           onChange={(e) => updateInput('helpLevel', e.target.value as HelpLevel)}

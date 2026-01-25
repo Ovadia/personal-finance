@@ -120,6 +120,10 @@ export interface RealModeInputs {
   otherInsuranceAnnual: number;
   tzedakahPercent: number;
 
+  // Childcare
+  hasNanny: boolean;
+  nannyCost: number; // Annual cost when kids are young
+
   // Carry forward
   helpLevel: HelpLevel;
   simchaStyle: SimchaStyle;
@@ -200,6 +204,8 @@ export const defaultRealModeInputs: RealModeInputs = {
   healthInsuranceMonthly: 0,
   otherInsuranceAnnual: 0,
   tzedakahPercent: 10,
+  hasNanny: false,
+  nannyCost: 60000,
   helpLevel: 'none',
   simchaStyle: 'standard',
 };
