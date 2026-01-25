@@ -4,7 +4,7 @@ import { SCHOOL_NAMES } from '../../constants';
 interface Props {
   inputs: RealModeInputs;
   updateInput: <K extends keyof RealModeInputs>(field: K, value: RealModeInputs[K]) => void;
-  addChild: () => void;
+  addChild: (planned?: boolean) => void;
   removeChild: (id: string) => void;
   updateChild: (id: string, updates: Partial<RealModeChild>) => void;
 }
@@ -17,9 +17,16 @@ export function ChildrenTimelineScreen({
   removeChild,
   updateChild,
 }: Props) {
+  const isPlanned = (child: RealModeChild) => child.birthYear > currentYear;
+
   const getTimelinePreview = (child: RealModeChild) => {
     const age = currentYear - child.birthYear;
     const events: string[] = [];
+
+    // For planned children, show when they'll be born
+    if (age < 0) {
+      events.push(`Born in ${-age} year${-age > 1 ? 's' : ''}`);
+    }
 
     if (age < 13) {
       const yearsToBarMitzvah = 13 - age;
@@ -60,6 +67,18 @@ export function ChildrenTimelineScreen({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.5rem' }}>{child.gender === 'boy' ? '👦' : '👧'}</span>
                 <span style={{ fontWeight: '600' }}>Child {index + 1}</span>
+                {isPlanned(child) && (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    padding: '0.15rem 0.5rem',
+                    background: '#e0f2fe',
+                    color: '#0369a1',
+                    borderRadius: '12px',
+                    fontWeight: '500',
+                  }}>
+                    Planned
+                  </span>
+                )}
               </div>
               <button className="remove-child" onClick={() => removeChild(child.id)}>
                 ×
@@ -69,7 +88,7 @@ export function ChildrenTimelineScreen({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#8a8a8a', marginBottom: '0.25rem' }}>
-                  Birth Year
+                  {isPlanned(child) ? 'Expected Birth Year' : 'Birth Year'}
                 </label>
                 <input
                   type="number"
@@ -81,7 +100,7 @@ export function ChildrenTimelineScreen({
                   style={{
                     width: '100%',
                     padding: '0.5rem',
-                    border: '2px solid #e5e5e0',
+                    border: `2px solid ${isPlanned(child) ? '#bae6fd' : '#e5e5e0'}`,
                     borderRadius: '8px',
                     fontSize: '1rem',
                   }}
@@ -148,10 +167,24 @@ export function ChildrenTimelineScreen({
           </div>
         ))}
 
-        <button className="add-child-btn" onClick={addChild}>
-          <span>+</span>
-          <span>Add a child</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="add-child-btn" onClick={() => addChild(false)} style={{ flex: 1 }}>
+            <span>+</span>
+            <span>Add child</span>
+          </button>
+          <button
+            className="add-child-btn"
+            onClick={() => addChild(true)}
+            style={{
+              flex: 1,
+              background: '#e0f2fe',
+              borderColor: '#bae6fd',
+            }}
+          >
+            <span>+</span>
+            <span>Plan future child</span>
+          </button>
+        </div>
       </div>
 
       {inputs.children.length === 0 && (

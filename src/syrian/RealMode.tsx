@@ -59,14 +59,14 @@ export default function LifestyleCalculator() {
     }));
   }, []);
 
-  const addChild = useCallback(() => {
+  const addChild = useCallback((planned: boolean = false) => {
     const currentYear = new Date().getFullYear();
     const newChild: RealModeChild = {
       id: crypto.randomUUID(),
-      age: 5,
+      age: planned ? -2 : 5,
       gender: 'boy',
       school: 'magen-david',
-      birthYear: currentYear - 5,
+      birthYear: planned ? currentYear + 2 : currentYear - 5,
       expectedWeddingAge: 25,
     };
     setInputs((prev) => ({ ...prev, children: [...prev.children, newChild] }));

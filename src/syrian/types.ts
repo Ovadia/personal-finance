@@ -82,8 +82,14 @@ export interface RealModeInputs {
   // Housing
   brooklynSituation: BrooklynSituation;
   brooklynMonthlyCost: number;
+  brooklynPlanToBuy: boolean;
+  brooklynPurchaseYear: number;
+  brooklynPostPurchaseMonthlyCost: number;
   dealSituation: DealSituation;
   dealSeasonalCost: number;
+  dealPlanToBuy: boolean;
+  dealPurchaseYear: number;
+  dealPostPurchaseCost: number;
 
   // Income
   incomeRange: IncomeRange;
@@ -120,9 +126,9 @@ export interface RealModeInputs {
 }
 
 export interface LifeEvent {
-  type: 'school-start' | 'bar-mitzvah' | 'high-school' | 'graduation' | 'wedding';
-  childId: string;
-  childName: string;
+  type: 'birth' | 'school-start' | 'bar-mitzvah' | 'high-school' | 'graduation' | 'wedding' | 'house-purchase';
+  childId?: string;
+  childName?: string;
   description: string;
 }
 
@@ -167,8 +173,14 @@ export const INCOME_MIDPOINTS: Record<IncomeRange, number> = {
 export const defaultRealModeInputs: RealModeInputs = {
   brooklynSituation: 'rent',
   brooklynMonthlyCost: 5000,
+  brooklynPlanToBuy: false,
+  brooklynPurchaseYear: new Date().getFullYear() + 3,
+  brooklynPostPurchaseMonthlyCost: 8000,
   dealSituation: 'none',
   dealSeasonalCost: 0,
+  dealPlanToBuy: false,
+  dealPurchaseYear: new Date().getFullYear() + 5,
+  dealPostPurchaseCost: 25000,
   incomeRange: '250k-400k',
   familySupport: 'none',
   annualSupport: 0,

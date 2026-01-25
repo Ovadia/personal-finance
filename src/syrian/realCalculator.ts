@@ -67,15 +67,30 @@ function sumCosts(costs: RealModeCategoryCosts): number {
 
 function calculateHousingForYear(inputs: RealModeInputs, year: number): number {
   let total = 0;
+  const calendarYear = CURRENT_YEAR + year;
 
   // Brooklyn
   if (inputs.brooklynSituation !== 'none') {
-    total += inputs.brooklynMonthlyCost * 12;
+    // Check if planning to buy and if this year is after purchase
+    if (inputs.brooklynSituation === 'rent' && inputs.brooklynPlanToBuy && calendarYear >= inputs.brooklynPurchaseYear) {
+      // After purchase: use post-purchase mortgage cost
+      total += inputs.brooklynPostPurchaseMonthlyCost * 12;
+    } else {
+      // Before purchase or not planning to buy: use current cost
+      total += inputs.brooklynMonthlyCost * 12;
+    }
   }
 
-  // Deal (seasonal - 3 months)
+  // Deal (seasonal)
   if (inputs.dealSituation !== 'none') {
-    total += inputs.dealSeasonalCost;
+    // Check if planning to buy and if this year is after purchase
+    if (inputs.dealSituation === 'rent' && inputs.dealPlanToBuy && calendarYear >= inputs.dealPurchaseYear) {
+      // After purchase: use post-purchase cost
+      total += inputs.dealPostPurchaseCost;
+    } else {
+      // Before purchase or not planning to buy: use current cost
+      total += inputs.dealSeasonalCost;
+    }
   }
 
   return total;
@@ -243,10 +258,36 @@ function calculateExtrasForYear(inputs: RealModeInputs, year: number): number {
 
 function getEventsForYear(inputs: RealModeInputs, year: number): LifeEvent[] {
   const events: LifeEvent[] = [];
+  const calendarYear = CURRENT_YEAR + year;
+
+  // House purchase events
+  if (inputs.brooklynSituation === 'rent' && inputs.brooklynPlanToBuy && calendarYear === inputs.brooklynPurchaseYear) {
+    events.push({
+      type: 'house-purchase',
+      description: 'Buy Brooklyn home',
+    });
+  }
+
+  if (inputs.dealSituation === 'rent' && inputs.dealPlanToBuy && calendarYear === inputs.dealPurchaseYear) {
+    events.push({
+      type: 'house-purchase',
+      description: 'Buy Deal home',
+    });
+  }
 
   for (const child of inputs.children) {
     const childAge = getChildAgeInYear(child, year);
     const childName = `Child ${inputs.children.indexOf(child) + 1}`;
+
+    // Birth (for planned children)
+    if (childAge === 0) {
+      events.push({
+        type: 'birth',
+        childId: child.id,
+        childName,
+        description: `${childName} is born`,
+      });
+    }
 
     // School start (age 2 - Atideinu)
     if (childAge === 2) {
@@ -319,6 +360,26 @@ function generateInsights(projection: ProjectionYear[], inputs: RealModeInputs):
         ? `Years ${peakYears[0]}-${peakYears[peakYears.length - 1]}`
         : `Year ${peakYears.join(' and ')}`;
     insights.push(`${range} will be your tightest period - expenses exceed income.`);
+  }
+
+  // House purchase insights
+  if (inputs.brooklynPlanToBuy && inputs.brooklynSituation === 'rent') {
+    const purchaseYear = inputs.brooklynPurchaseYear - CURRENT_YEAR + 1;
+    if (purchaseYear > 0 && purchaseYear <= 30) {
+      const costDiff = inputs.brooklynPostPurchaseMonthlyCost - inputs.brooklynMonthlyCost;
+      if (costDiff > 0) {
+        insights.push(`Housing costs increase by $${Math.round(costDiff/1000)}K/mo in Year ${purchaseYear} when you buy in Brooklyn.`);
+      } else if (costDiff < 0) {
+        insights.push(`Housing costs decrease by $${Math.round(-costDiff/1000)}K/mo in Year ${purchaseYear} when you buy in Brooklyn.`);
+      }
+    }
+  }
+
+  // Planned children insight
+  const plannedChildren = inputs.children.filter((c) => c.birthYear > CURRENT_YEAR);
+  if (plannedChildren.length > 0) {
+    const years = plannedChildren.map((c) => c.birthYear - CURRENT_YEAR + 1);
+    insights.push(`Planned ${plannedChildren.length === 1 ? 'child arrives' : 'children arrive'} in Year ${years.join(' and ')}.`);
   }
 
   // Multiple children in school

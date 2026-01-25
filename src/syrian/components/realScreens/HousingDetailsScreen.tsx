@@ -66,6 +66,62 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
             />
           </div>
         )}
+
+        {inputs.brooklynSituation === 'rent' && (
+          <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', borderRadius: '8px', border: '2px solid #bbf7d0' }}>
+            <div
+              className={`toggle-container ${inputs.brooklynPlanToBuy ? 'active' : ''}`}
+              onClick={() => updateInput('brooklynPlanToBuy', !inputs.brooklynPlanToBuy)}
+              style={{ cursor: 'pointer', background: 'white', marginBottom: inputs.brooklynPlanToBuy ? '1rem' : 0 }}
+            >
+              <div className="toggle-label">
+                <div className="toggle-title">Planning to buy?</div>
+                <div className="toggle-cost">We'll adjust the projection when you do</div>
+              </div>
+              <div className={`toggle-switch ${inputs.brooklynPlanToBuy ? 'active' : ''}`} />
+            </div>
+
+            {inputs.brooklynPlanToBuy && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
+                    Purchase year
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.brooklynPurchaseYear}
+                    onChange={(e) => updateInput('brooklynPurchaseYear', parseInt(e.target.value) || new Date().getFullYear() + 3)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      fontSize: '1rem',
+                      border: '2px solid #e5e5e0',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
+                    Expected mortgage/mo
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.brooklynPostPurchaseMonthlyCost}
+                    onChange={(e) => updateInput('brooklynPostPurchaseMonthlyCost', parseInt(e.target.value) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      fontSize: '1rem',
+                      border: '2px solid #e5e5e0',
+                      borderRadius: '8px',
+                    }}
+                    placeholder="8000"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div>
@@ -105,6 +161,62 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
               }}
               placeholder={inputs.dealSituation === 'rent' ? '36000' : '25000'}
             />
+          </div>
+        )}
+
+        {inputs.dealSituation === 'rent' && (
+          <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0fdf4', borderRadius: '8px', border: '2px solid #bbf7d0' }}>
+            <div
+              className={`toggle-container ${inputs.dealPlanToBuy ? 'active' : ''}`}
+              onClick={() => updateInput('dealPlanToBuy', !inputs.dealPlanToBuy)}
+              style={{ cursor: 'pointer', background: 'white', marginBottom: inputs.dealPlanToBuy ? '1rem' : 0 }}
+            >
+              <div className="toggle-label">
+                <div className="toggle-title">Planning to buy in Deal?</div>
+                <div className="toggle-cost">We'll switch from rent to ownership costs</div>
+              </div>
+              <div className={`toggle-switch ${inputs.dealPlanToBuy ? 'active' : ''}`} />
+            </div>
+
+            {inputs.dealPlanToBuy && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
+                    Purchase year
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.dealPurchaseYear}
+                    onChange={(e) => updateInput('dealPurchaseYear', parseInt(e.target.value) || new Date().getFullYear() + 5)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      fontSize: '1rem',
+                      border: '2px solid #e5e5e0',
+                      borderRadius: '8px',
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
+                    Annual cost after
+                  </label>
+                  <input
+                    type="number"
+                    value={inputs.dealPostPurchaseCost}
+                    onChange={(e) => updateInput('dealPostPurchaseCost', parseInt(e.target.value) || 0)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      fontSize: '1rem',
+                      border: '2px solid #e5e5e0',
+                      borderRadius: '8px',
+                    }}
+                    placeholder="25000"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
