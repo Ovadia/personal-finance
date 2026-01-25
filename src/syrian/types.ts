@@ -78,18 +78,42 @@ export interface Vehicle {
   paidOff: boolean;
 }
 
+export interface MortgageDetails {
+  homePrice: number;
+  downPayment: number; // percentage (0-100)
+  interestRate: number; // percentage (e.g., 6.5)
+  termYears: number;
+  propertyTax: number; // annual
+  insurance: number; // annual
+  maintenance: number; // annual
+  monthlyOverride: number | null; // if user wants to override calculated
+}
+
+export const defaultMortgage: MortgageDetails = {
+  homePrice: 1500000,
+  downPayment: 20,
+  interestRate: 6.5,
+  termYears: 30,
+  propertyTax: 15000,
+  insurance: 3000,
+  maintenance: 6000,
+  monthlyOverride: null,
+};
+
 export interface RealModeInputs {
   // Housing
   brooklynSituation: BrooklynSituation;
   brooklynMonthlyCost: number;
+  brooklynMortgage: MortgageDetails;
   brooklynPlanToBuy: boolean;
   brooklynPurchaseYear: number;
-  brooklynPostPurchaseMonthlyCost: number;
+  brooklynFutureMortgage: MortgageDetails;
   dealSituation: DealSituation;
   dealSeasonalCost: number;
+  dealMortgage: MortgageDetails;
   dealPlanToBuy: boolean;
   dealPurchaseYear: number;
-  dealPostPurchaseCost: number;
+  dealFutureMortgage: MortgageDetails;
 
   // Income
   incomeRange: IncomeRange;
@@ -177,14 +201,16 @@ export const INCOME_MIDPOINTS: Record<IncomeRange, number> = {
 export const defaultRealModeInputs: RealModeInputs = {
   brooklynSituation: 'rent',
   brooklynMonthlyCost: 5000,
+  brooklynMortgage: { ...defaultMortgage },
   brooklynPlanToBuy: false,
   brooklynPurchaseYear: new Date().getFullYear() + 3,
-  brooklynPostPurchaseMonthlyCost: 8000,
+  brooklynFutureMortgage: { ...defaultMortgage },
   dealSituation: 'none',
   dealSeasonalCost: 0,
+  dealMortgage: { ...defaultMortgage, homePrice: 800000, propertyTax: 8000, maintenance: 4000 },
   dealPlanToBuy: false,
   dealPurchaseYear: new Date().getFullYear() + 5,
-  dealPostPurchaseCost: 25000,
+  dealFutureMortgage: { ...defaultMortgage, homePrice: 800000, propertyTax: 8000, maintenance: 4000 },
   incomeRange: '250k-400k',
   familySupport: 'none',
   annualSupport: 0,

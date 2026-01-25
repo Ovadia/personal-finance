@@ -5,9 +5,40 @@ import {
   RealModeCategoryCosts,
   LifeEvent,
   RealModeChild,
+  MortgageDetails,
   INCOME_MIDPOINTS,
 } from './types';
 import { COSTS, getTuitionForChild } from './constants';
+
+// Calculate monthly mortgage payment using standard amortization formula
+export function calculateMonthlyMortgage(mortgage: MortgageDetails): number {
+  if (mortgage.monthlyOverride !== null) {
+    return mortgage.monthlyOverride;
+  }
+
+  const principal = mortgage.homePrice * (1 - mortgage.downPayment / 100);
+  const monthlyRate = mortgage.interestRate / 100 / 12;
+  const numPayments = mortgage.termYears * 12;
+
+  // If 0% interest, simple division
+  if (monthlyRate === 0) {
+    return principal / numPayments;
+  }
+
+  // Standard mortgage formula: M = P * [r(1+r)^n] / [(1+r)^n - 1]
+  const monthlyPrincipalInterest =
+    (principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments))) /
+    (Math.pow(1 + monthlyRate, numPayments) - 1);
+
+  return Math.round(monthlyPrincipalInterest);
+}
+
+// Get total annual housing cost from mortgage details
+export function getAnnualHousingCost(mortgage: MortgageDetails): number {
+  const monthlyPI = calculateMonthlyMortgage(mortgage);
+  const annualPI = monthlyPI * 12;
+  return annualPI + mortgage.propertyTax + mortgage.insurance + mortgage.maintenance;
+}
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -71,26 +102,44 @@ function calculateHousingForYear(inputs: RealModeInputs, year: number): number {
 
   // Brooklyn
   if (inputs.brooklynSituation !== 'none') {
-    // Check if planning to buy and if this year is after purchase
-    if (inputs.brooklynSituation === 'rent' && inputs.brooklynPlanToBuy && calendarYear >= inputs.brooklynPurchaseYear) {
-      // After purchase: use post-purchase mortgage cost
-      total += inputs.brooklynPostPurchaseMonthlyCost * 12;
-    } else {
-      // Before purchase or not planning to buy: use current cost
-      total += inputs.brooklynMonthlyCost * 12;
+    if (inputs.brooklynSituation === 'rent') {
+      // Currently renting
+      if (inputs.brooklynPlanToBuy && calendarYear >= inputs.brooklynPurchaseYear) {
+        // After purchase: use future mortgage details
+        total += getAnnualHousingCost(inputs.brooklynFutureMortgage);
+      } else {
+        // Still renting
+        total += inputs.brooklynMonthlyCost * 12;
+      }
+    } else if (inputs.brooklynSituation === 'mortgage') {
+      // Currently own with mortgage
+      total += getAnnualHousingCost(inputs.brooklynMortgage);
+    } else if (inputs.brooklynSituation === 'paid-off') {
+      // Paid off - just taxes, insurance, maintenance
+      total += inputs.brooklynMortgage.propertyTax + inputs.brooklynMortgage.insurance + inputs.brooklynMortgage.maintenance;
     }
+    // 'family' = no cost
   }
 
   // Deal (seasonal)
   if (inputs.dealSituation !== 'none') {
-    // Check if planning to buy and if this year is after purchase
-    if (inputs.dealSituation === 'rent' && inputs.dealPlanToBuy && calendarYear >= inputs.dealPurchaseYear) {
-      // After purchase: use post-purchase cost
-      total += inputs.dealPostPurchaseCost;
-    } else {
-      // Before purchase or not planning to buy: use current cost
-      total += inputs.dealSeasonalCost;
+    if (inputs.dealSituation === 'rent') {
+      // Currently renting
+      if (inputs.dealPlanToBuy && calendarYear >= inputs.dealPurchaseYear) {
+        // After purchase: use future mortgage details
+        total += getAnnualHousingCost(inputs.dealFutureMortgage);
+      } else {
+        // Still renting
+        total += inputs.dealSeasonalCost;
+      }
+    } else if (inputs.dealSituation === 'own-mortgage') {
+      // Currently own with mortgage
+      total += getAnnualHousingCost(inputs.dealMortgage);
+    } else if (inputs.dealSituation === 'own-paid') {
+      // Paid off - just taxes, insurance, maintenance
+      total += inputs.dealMortgage.propertyTax + inputs.dealMortgage.insurance + inputs.dealMortgage.maintenance;
     }
+    // 'family' = no cost
   }
 
   return total;

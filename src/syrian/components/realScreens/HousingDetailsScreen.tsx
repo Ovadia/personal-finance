@@ -1,4 +1,6 @@
-import { RealModeInputs, BrooklynSituation, DealSituation } from '../../types';
+import { RealModeInputs, BrooklynSituation, DealSituation, MortgageDetails } from '../../types';
+import { calculateMonthlyMortgage, getAnnualHousingCost } from '../../realCalculator';
+import { formatCurrency } from '../../calculator';
 
 interface Props {
   inputs: RealModeInputs;
@@ -20,6 +22,195 @@ const dealOptions: { value: DealSituation; label: string; description: string }[
   { value: 'family', label: 'Family house', description: 'Use family property' },
   { value: 'none', label: "Don't do Deal", description: '' },
 ];
+
+interface MortgageInputProps {
+  mortgage: MortgageDetails;
+  onChange: (mortgage: MortgageDetails) => void;
+  label: string;
+}
+
+function MortgageInput({ mortgage, onChange, label }: MortgageInputProps) {
+  const monthlyPI = calculateMonthlyMortgage(mortgage);
+  const annualTotal = getAnnualHousingCost(mortgage);
+  const monthlyTotal = Math.round(annualTotal / 12);
+
+  const update = (field: keyof MortgageDetails, value: number | null) => {
+    onChange({ ...mortgage, [field]: value });
+  };
+
+  return (
+    <div style={{ padding: '1rem', background: '#fafafa', borderRadius: '8px', border: '2px solid #e5e5e0' }}>
+      <div style={{ fontWeight: '600', marginBottom: '0.75rem' }}>{label}</div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: '#666' }}>
+            Home Price
+          </label>
+          <input
+            type="number"
+            value={mortgage.homePrice}
+            onChange={(e) => update('homePrice', parseInt(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              fontSize: '0.95rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: '#666' }}>
+            Down Payment %
+          </label>
+          <input
+            type="number"
+            value={mortgage.downPayment}
+            onChange={(e) => update('downPayment', parseInt(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              fontSize: '0.95rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+            }}
+          />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: '#666' }}>
+            Interest Rate %
+          </label>
+          <input
+            type="number"
+            step="0.125"
+            value={mortgage.interestRate}
+            onChange={(e) => update('interestRate', parseFloat(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              fontSize: '0.95rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.8rem', color: '#666' }}>
+            Term (years)
+          </label>
+          <select
+            value={mortgage.termYears}
+            onChange={(e) => update('termYears', parseInt(e.target.value))}
+            style={{
+              width: '100%',
+              padding: '0.5rem',
+              fontSize: '0.95rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+              background: 'white',
+            }}
+          >
+            <option value={15}>15 years</option>
+            <option value={20}>20 years</option>
+            <option value={30}>30 years</option>
+          </select>
+        </div>
+      </div>
+
+      <div
+        style={{
+          background: '#e0f2fe',
+          padding: '0.75rem',
+          borderRadius: '6px',
+          marginBottom: '0.75rem',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: '0.8rem', color: '#0369a1' }}>Calculated P&I</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#0369a1' }}>
+          {formatCurrency(monthlyPI)}/mo
+        </div>
+      </div>
+
+      <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.5rem' }}>Additional annual costs:</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', color: '#888' }}>
+            Property Tax
+          </label>
+          <input
+            type="number"
+            value={mortgage.propertyTax}
+            onChange={(e) => update('propertyTax', parseInt(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '0.4rem',
+              fontSize: '0.85rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', color: '#888' }}>
+            Insurance
+          </label>
+          <input
+            type="number"
+            value={mortgage.insurance}
+            onChange={(e) => update('insurance', parseInt(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '0.4rem',
+              fontSize: '0.85rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.75rem', color: '#888' }}>
+            Maintenance
+          </label>
+          <input
+            type="number"
+            value={mortgage.maintenance}
+            onChange={(e) => update('maintenance', parseInt(e.target.value) || 0)}
+            style={{
+              width: '100%',
+              padding: '0.4rem',
+              fontSize: '0.85rem',
+              border: '2px solid #e5e5e0',
+              borderRadius: '6px',
+            }}
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          background: '#f0fdf4',
+          padding: '0.75rem',
+          borderRadius: '6px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: '0.8rem', color: '#166534' }}>Total Housing Cost</div>
+          <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#166534' }}>
+            {formatCurrency(monthlyTotal)}/mo • {formatCurrency(annualTotal)}/yr
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function HousingDetailsScreen({ inputs, updateInput }: Props) {
   return (
@@ -46,10 +237,10 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
           ))}
         </div>
 
-        {inputs.brooklynSituation !== 'none' && (
+        {inputs.brooklynSituation === 'rent' && (
           <div style={{ marginTop: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              Monthly cost ($)
+              Monthly rent ($)
             </label>
             <input
               type="number"
@@ -63,6 +254,16 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
                 borderRadius: '8px',
               }}
               placeholder="5000"
+            />
+          </div>
+        )}
+
+        {(inputs.brooklynSituation === 'mortgage' || inputs.brooklynSituation === 'paid-off') && (
+          <div style={{ marginTop: '1rem' }}>
+            <MortgageInput
+              mortgage={inputs.brooklynMortgage}
+              onChange={(m) => updateInput('brooklynMortgage', m)}
+              label={inputs.brooklynSituation === 'paid-off' ? 'Property Details' : 'Mortgage Details'}
             />
           </div>
         )}
@@ -82,8 +283,8 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
             </div>
 
             {inputs.brooklynPlanToBuy && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
+              <div>
+                <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
                     Purchase year
                   </label>
@@ -100,24 +301,11 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
                     }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
-                    Expected mortgage/mo
-                  </label>
-                  <input
-                    type="number"
-                    value={inputs.brooklynPostPurchaseMonthlyCost}
-                    onChange={(e) => updateInput('brooklynPostPurchaseMonthlyCost', parseInt(e.target.value) || 0)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      fontSize: '1rem',
-                      border: '2px solid #e5e5e0',
-                      borderRadius: '8px',
-                    }}
-                    placeholder="8000"
-                  />
-                </div>
+                <MortgageInput
+                  mortgage={inputs.brooklynFutureMortgage}
+                  onChange={(m) => updateInput('brooklynFutureMortgage', m)}
+                  label="Expected Mortgage"
+                />
               </div>
             )}
           </div>
@@ -143,10 +331,10 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
           ))}
         </div>
 
-        {inputs.dealSituation !== 'none' && inputs.dealSituation !== 'family' && (
+        {inputs.dealSituation === 'rent' && (
           <div style={{ marginTop: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-              {inputs.dealSituation === 'rent' ? 'Seasonal rental cost ($)' : 'Annual cost (mortgage/taxes) ($)'}
+              Seasonal rental cost ($)
             </label>
             <input
               type="number"
@@ -159,7 +347,17 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
                 border: '2px solid #e5e5e0',
                 borderRadius: '8px',
               }}
-              placeholder={inputs.dealSituation === 'rent' ? '36000' : '25000'}
+              placeholder="36000"
+            />
+          </div>
+        )}
+
+        {(inputs.dealSituation === 'own-mortgage' || inputs.dealSituation === 'own-paid') && (
+          <div style={{ marginTop: '1rem' }}>
+            <MortgageInput
+              mortgage={inputs.dealMortgage}
+              onChange={(m) => updateInput('dealMortgage', m)}
+              label={inputs.dealSituation === 'own-paid' ? 'Property Details' : 'Mortgage Details'}
             />
           </div>
         )}
@@ -179,8 +377,8 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
             </div>
 
             {inputs.dealPlanToBuy && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <div>
+              <div>
+                <div style={{ marginBottom: '1rem' }}>
                   <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
                     Purchase year
                   </label>
@@ -197,24 +395,11 @@ export function HousingDetailsScreen({ inputs, updateInput }: Props) {
                     }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem' }}>
-                    Annual cost after
-                  </label>
-                  <input
-                    type="number"
-                    value={inputs.dealPostPurchaseCost}
-                    onChange={(e) => updateInput('dealPostPurchaseCost', parseInt(e.target.value) || 0)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      fontSize: '1rem',
-                      border: '2px solid #e5e5e0',
-                      borderRadius: '8px',
-                    }}
-                    placeholder="25000"
-                  />
-                </div>
+                <MortgageInput
+                  mortgage={inputs.dealFutureMortgage}
+                  onChange={(m) => updateInput('dealFutureMortgage', m)}
+                  label="Expected Mortgage"
+                />
               </div>
             )}
           </div>
