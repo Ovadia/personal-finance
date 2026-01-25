@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import {
   RealModeInputs,
   defaultRealModeInputs,
   RealModeChild,
   Vehicle,
-  LifestyleInputs,
 } from './types';
-import { generate30YearProjection, prefillFromQuickMode } from './realCalculator';
+import { generate30YearProjection } from './realCalculator';
 import { QuizShell } from './components/QuizShell';
 import { HousingDetailsScreen } from './components/realScreens/HousingDetailsScreen';
 import { IncomeScreen } from './components/realScreens/IncomeScreen';
@@ -19,33 +17,14 @@ import { RealResultsScreen } from './components/realScreens/RealResultsScreen';
 import { formatCurrencyFull } from './calculator';
 import './styles.css';
 
-const STORAGE_KEY = 'syrian-real-mode-inputs';
-const QUICK_MODE_KEY = 'syrian-lifestyle-inputs';
+const STORAGE_KEY = 'syrian-lifestyle-inputs';
 const TOTAL_SCREENS = 7; // 6 input screens + 1 results
 
-function loadSavedInputs(forceFromQuickMode: boolean): RealModeInputs {
+function loadSavedInputs(): RealModeInputs {
   try {
-    // If coming from quick mode, always use fresh quick mode data
-    if (forceFromQuickMode) {
-      const quickSaved = localStorage.getItem(QUICK_MODE_KEY);
-      if (quickSaved) {
-        const quickInputs = JSON.parse(quickSaved) as LifestyleInputs;
-        const prefilled = prefillFromQuickMode(quickInputs);
-        return { ...defaultRealModeInputs, ...prefilled };
-      }
-    }
-
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       return { ...defaultRealModeInputs, ...JSON.parse(saved) };
-    }
-
-    // Try to pre-fill from Quick Mode
-    const quickSaved = localStorage.getItem(QUICK_MODE_KEY);
-    if (quickSaved) {
-      const quickInputs = JSON.parse(quickSaved) as LifestyleInputs;
-      const prefilled = prefillFromQuickMode(quickInputs);
-      return { ...defaultRealModeInputs, ...prefilled };
     }
   } catch (e) {
     // Ignore parse errors
@@ -53,11 +32,9 @@ function loadSavedInputs(forceFromQuickMode: boolean): RealModeInputs {
   return defaultRealModeInputs;
 }
 
-export default function RealModeCalculator() {
-  const [searchParams] = useSearchParams();
-  const fromQuickMode = searchParams.get('from') === 'quick';
+export default function LifestyleCalculator() {
   const [currentScreen, setCurrentScreen] = useState(0);
-  const [inputs, setInputs] = useState<RealModeInputs>(() => loadSavedInputs(fromQuickMode));
+  const [inputs, setInputs] = useState<RealModeInputs>(loadSavedInputs);
 
   // Save to localStorage whenever inputs change
   useEffect(() => {
@@ -181,7 +158,7 @@ export default function RealModeCalculator() {
   };
 
   return (
-    <div className="syrian-calculator real-mode">
+    <div className="syrian-calculator">
       <QuizShell
         currentScreen={currentScreen}
         totalScreens={TOTAL_SCREENS}

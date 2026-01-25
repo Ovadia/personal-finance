@@ -1,9 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import App from './App.jsx'
-import SyrianCalculator from './syrian'
-import RealModeCalculator from './syrian/RealMode'
+import LifestyleCalculator from './syrian/RealMode'
 import './index.css'
 
 const router = createBrowserRouter([
@@ -13,11 +12,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/lifestyle',
-    element: <SyrianCalculator />,
+    element: <LifestyleCalculator />,
   },
   {
     path: '/lifestyle/real',
-    element: <RealModeCalculator />,
+    element: <Navigate to="/lifestyle" replace />,
   },
 ])
 

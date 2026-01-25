@@ -354,38 +354,20 @@ export function RealResultsScreen({ projection, inputs, onRestart }: Props) {
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: '0.75rem' }}>
-        <button
-          onClick={onRestart}
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            background: 'white',
-            border: '2px solid #e5e5e0',
-            borderRadius: '12px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-          }}
-        >
-          Start Over
-        </button>
-        <a
-          href="/lifestyle"
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            background: '#f5f5f2',
-            border: '2px solid #e5e5e0',
-            borderRadius: '12px',
-            textDecoration: 'none',
-            color: '#4a4a4a',
-            textAlign: 'center',
-            fontSize: '0.9rem',
-          }}
-        >
-          Back to Quick Mode
-        </a>
-      </div>
+      <button
+        onClick={onRestart}
+        style={{
+          width: '100%',
+          padding: '0.75rem',
+          background: 'white',
+          border: '2px solid #e5e5e0',
+          borderRadius: '12px',
+          cursor: 'pointer',
+          fontSize: '0.9rem',
+        }}
+      >
+        Start Over
+      </button>
     </div>
   );
 }
